@@ -8,6 +8,9 @@
 
 # ![HLS.js](https://raw.githubusercontent.com/video-dev/hls.js/master/docs/logo.svg)
 
+### support the playback of HEVC and MPEG-TS formatted videos.
+
+
 HLS.js is a JavaScript library that implements an [HTTP Live Streaming] client.
 It relies on [HTML5 video][] and [MediaSource Extensions][] for playback.
 

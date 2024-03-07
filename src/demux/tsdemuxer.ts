@@ -295,9 +295,7 @@ class TSDemuxer implements Demuxer {
                       this.videoParser = new AvcVideoParser();
                       break;
                     case 'hevc':
-                      if (__USE_M2TS_ADVANCED_CODECS__) {
-                        this.videoParser = new HevcVideoParser();
-                      }
+                      this.videoParser = new HevcVideoParser();
                       break;
                   }
                 }
@@ -487,9 +485,7 @@ class TSDemuxer implements Demuxer {
             this.videoParser = new AvcVideoParser();
             break;
           case 'hevc':
-            if (__USE_M2TS_ADVANCED_CODECS__) {
-              this.videoParser = new HevcVideoParser();
-            }
+            this.videoParser = new HevcVideoParser();
             break;
         }
       }
@@ -901,14 +897,10 @@ function parsePMT(
         break;
 
       case 0x24: // ITU-T Rec. H.265 and ISO/IEC 23008-2 (HEVC)
-        if (__USE_M2TS_ADVANCED_CODECS__) {
-          if (result.videoPid === -1) {
-            result.videoPid = pid;
-            result.segmentVideoCodec = 'hevc';
-            logger.log('HEVC in M2TS found');
-          }
-        } else {
-          logger.warn('Unsupported HEVC in M2TS found');
+        if (result.videoPid === -1) {
+          result.videoPid = pid;
+          result.segmentVideoCodec = 'hevc';
+          logger.log('HEVC in M2TS found');
         }
         break;
 
