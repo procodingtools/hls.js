@@ -8491,7 +8491,7 @@
           var mimeType = track.container + ";codecs=" + codec;
           _this14.log("creating sourceBuffer(" + mimeType + ")");
           try {
-            var sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(_this14.refineMimeType(mimeType));
+            var sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer( /*this.refineMimeType(mimeType)*/mimeType);
             var sbName = trackName;
             _this14.addBufferListener(sbName, 'updatestart', _this14._onSBUpdateStart);
             _this14.addBufferListener(sbName, 'updateend', _this14._onSBUpdateEnd);

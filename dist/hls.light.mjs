@@ -7894,7 +7894,7 @@ class BufferController extends Logger {
         const mimeType = `${track.container};codecs=${codec}`;
         this.log(`creating sourceBuffer(${mimeType})`);
         try {
-          const sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(this.refineMimeType(mimeType));
+          const sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer( /*this.refineMimeType(mimeType)*/mimeType);
           const sbName = trackName;
           this.addBufferListener(sbName, 'updatestart', this._onSBUpdateStart);
           this.addBufferListener(sbName, 'updateend', this._onSBUpdateEnd);

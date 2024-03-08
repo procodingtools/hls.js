@@ -1067,7 +1067,7 @@ export default class BufferController extends Logger implements ComponentAPI {
         this.log(`creating sourceBuffer(${mimeType})`);
         try {
           const sb = (sourceBuffer[trackName] =
-            mediaSource.addSourceBuffer(this.refineMimeType(mimeType)));
+            mediaSource.addSourceBuffer(/*this.refineMimeType(mimeType)*/ mimeType));
           const sbName = trackName as SourceBufferName;
           this.addBufferListener(sbName, 'updatestart', this._onSBUpdateStart);
           this.addBufferListener(sbName, 'updateend', this._onSBUpdateEnd);
