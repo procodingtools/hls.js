@@ -44,6 +44,7 @@ export declare class AbrController extends Logger implements AbrComponentAPI {
     get nextAutoLevel(): number;
     private getAutoLevelKey;
     private getNextABRAutoLevel;
+    private getStarvationDelay;
     private getBwEstimate;
     private findBestLevel;
     set nextAutoLevel(nextLevel: number);
@@ -120,18 +121,17 @@ export declare class AudioStreamController extends BaseStreamController implemen
     protected resetLoadingState(): void;
     protected onTickEnd(): void;
     private doTickIdle;
-    protected getMaxBufferLength(mainBufferLength?: number): number;
-    onMediaDetaching(): void;
-    onAudioTracksUpdated(event: Events.AUDIO_TRACKS_UPDATED, { audioTracks }: AudioTracksUpdatedData): void;
-    onAudioTrackSwitching(event: Events.AUDIO_TRACK_SWITCHING, data: AudioTrackSwitchingData): void;
-    onManifestLoading(): void;
-    onLevelLoaded(event: Events.LEVEL_LOADED, data: LevelLoadedData): void;
-    onAudioTrackLoaded(event: Events.AUDIO_TRACK_LOADED, data: TrackLoadedData): void;
+    protected onMediaDetaching(): void;
+    private onAudioTracksUpdated;
+    private onAudioTrackSwitching;
+    protected onManifestLoading(): void;
+    private onLevelLoaded;
+    private onAudioTrackLoaded;
     _handleFragmentLoadProgress(data: FragLoadedData): void;
     protected _handleFragmentLoadComplete(fragLoadedData: FragLoadedData): void;
-    onBufferReset(): void;
-    onBufferCreated(event: Events.BUFFER_CREATED, data: BufferCreatedData): void;
-    onFragBuffered(event: Events.FRAG_BUFFERED, data: FragBufferedData): void;
+    private onBufferReset;
+    private onBufferCreated;
+    private onFragBuffered;
     protected onError(event: Events.ERROR, data: ErrorData): void;
     private onBufferFlushing;
     private onBufferFlushed;
@@ -246,6 +246,8 @@ export declare class BaseStreamController extends TaskLoop implements NetworkCom
     protected startFragRequested: boolean;
     protected decrypter: Decrypter;
     protected initPTS: RationalTimestamp[];
+    protected buffering: boolean;
+    private loadingParts;
     constructor(hls: Hls, fragmentTracker: FragmentTracker, keyLoader: KeyLoader, logPrefix: string, playlistType: PlaylistLevelType);
     protected registerListeners(): void;
     protected unregisterListeners(): void;
@@ -253,6 +255,8 @@ export declare class BaseStreamController extends TaskLoop implements NetworkCom
     protected onTickEnd(): void;
     startLoad(startPosition: number): void;
     stopLoad(): void;
+    pauseBuffering(): void;
+    resumeBuffering(): void;
     protected _streamEnded(bufferInfo: BufferInfo, levelDetails: LevelDetails): boolean;
     protected getLevelDetails(): LevelDetails | undefined;
     protected onMediaAttached(event: Events.MEDIA_ATTACHED, data: MediaAttachedData): void;
@@ -280,6 +284,7 @@ export declare class BaseStreamController extends TaskLoop implements NetworkCom
     private doFragPartsLoad;
     private handleFragLoadError;
     protected _handleTransmuxerFlush(chunkMeta: ChunkMetadata): void;
+    private shouldLoadParts;
     protected getCurrentContext(chunkMeta: ChunkMetadata): {
         frag: Fragment;
         part: Part | null;
@@ -355,11 +360,14 @@ export declare class BufferController extends Logger implements ComponentAPI {
     private operationQueue;
     private listeners;
     private hls;
+    private fragmentTracker;
     bufferCodecEventsExpected: number;
     private _bufferCodecEventsTotal;
     media: HTMLMediaElement | null;
     mediaSource: MediaSource | null;
     private lastMpegAudioChunk;
+    private blockedAudioAppend;
+    private lastVideoAppendEnd;
     private appendSource;
     appendErrors: {
         audio: number;
@@ -369,7 +377,7 @@ export declare class BufferController extends Logger implements ComponentAPI {
     tracks: TrackSet;
     pendingTracks: TrackSet;
     sourceBuffer: SourceBuffers;
-    constructor(hls: Hls);
+    constructor(hls: Hls, fragmentTracker: FragmentTracker);
     hasSourceTypes(): boolean;
     destroy(): void;
     protected registerListeners(): void;
@@ -384,8 +392,11 @@ export declare class BufferController extends Logger implements ComponentAPI {
     protected onBufferReset(): void;
     private resetBuffer;
     protected onBufferCodecs(event: Events.BUFFER_CODECS, data: BufferCodecsData): void;
-    protected appendChangeType(type: any, mimeType: any): void;
+    protected appendChangeType(type: SourceBufferName, mimeType: string): void;
+    private blockAudio;
+    private unblockAudio;
     protected onBufferAppending(event: Events.BUFFER_APPENDING, eventData: BufferAppendingData): void;
+    private getFlushOp;
     protected onBufferFlushing(event: Events.BUFFER_FLUSHING, data: BufferFlushingData): void;
     protected onFragParsed(event: Events.FRAG_PARSED, data: FragParsedData): void;
     private onFragChanged;
@@ -399,8 +410,8 @@ export declare class BufferController extends Logger implements ComponentAPI {
      * 'liveDurationInfinity` is set to `true`
      * More details: https://github.com/video-dev/hls.js/issues/355
      */
-    private updateMediaElementDuration;
-    updateSeekableRange(levelDetails: any): void;
+    private getDurationAndRange;
+    private updateMediaSource;
     protected checkPendingTracks(): void;
     protected createSourceBuffers(tracks: TrackSet): void;
     private refineMimeType;
@@ -1060,6 +1071,7 @@ export declare class FPSController implements ComponentAPI {
     protected unregisterListeners(): void;
     destroy(): void;
     protected onMediaAttaching(event: Events.MEDIA_ATTACHING, data: MediaAttachingData): void;
+    private onMediaDetaching;
     checkFPS(video: HTMLVideoElement, decodedFrames: number, droppedFrames: number): void;
     checkFPSInterval(): void;
 }
@@ -1242,6 +1254,7 @@ declare class FragmentTracker implements ComponentAPI {
      * If not found any Fragment, return null
      */
     getBufferedFrag(position: number, levelType: PlaylistLevelType): Fragment | null;
+    getFragAtPos(position: number, levelType: PlaylistLevelType, buffered?: boolean): Fragment | null;
     /**
      * Partial fragments effected by coded frame eviction will be removed
      * The browser will unload parts of the buffer to free up memory for new buffer data
@@ -1319,7 +1332,6 @@ declare class Hls implements HlsEventEmitter {
     readonly logger: ILogger;
     private coreComponents;
     private networkControllers;
-    private started;
     private _emitter;
     private _autoLevelCapping;
     private _maxHdcpLevel;
@@ -1408,11 +1420,11 @@ declare class Hls implements HlsEventEmitter {
      */
     stopLoad(): void;
     /**
-     * Resumes stream controller segment loading if previously started.
+     * Resumes stream controller segment loading after `pauseBuffering` has been called.
      */
     resumeBuffering(): void;
     /**
-     * Stops stream controller segment loading without changing 'started' state like stopLoad().
+     * Prevents stream controller from loading new segments until `resumeBuffering` is called.
      * This allows for media buffering to be paused without interupting playlist loading.
      */
     pauseBuffering(): void;
@@ -1557,6 +1569,7 @@ declare class Hls implements HlsEventEmitter {
      */
     get playingDate(): Date | null;
     get mainForwardBufferInfo(): BufferInfo | null;
+    get maxBufferLength(): number;
     /**
      * Find and select the best matching audio track, making a level switch when a Group change is necessary.
      * Updates `hls.config.audioPreference`. Returns the selected track, or null when no matching track is found.
@@ -2414,6 +2427,8 @@ export declare type MP4RemuxerConfig = {
 export declare interface NetworkComponentAPI extends ComponentAPI {
     startLoad(startPosition: number): void;
     stopLoad(): void;
+    pauseBuffering?(): void;
+    resumeBuffering?(): void;
 }
 
 export declare const enum NetworkErrorAction {
@@ -2708,6 +2723,7 @@ declare class StreamController extends BaseStreamController implements NetworkCo
     private _handleTransmuxComplete;
     private _bufferInitSegment;
     getMainFwdBufferInfo(): BufferInfo | null;
+    get maxBufferLength(): number;
     private backtrack;
     private checkFragmentChanged;
     get nextLevel(): number;
@@ -2750,11 +2766,6 @@ declare class StyledUnicodeChar {
     isEmpty(): boolean;
 }
 
-declare interface SubtitleFragProcessed {
-    success: boolean;
-    frag: Fragment;
-}
-
 export declare interface SubtitleFragProcessedData {
     success: boolean;
     frag: Fragment;
@@ -2782,19 +2793,18 @@ export declare class SubtitleStreamController extends BaseStreamController imple
     protected registerListeners(): void;
     protected unregisterListeners(): void;
     startLoad(startPosition: number): void;
-    onManifestLoading(): void;
-    onMediaDetaching(): void;
-    onLevelLoaded(event: Events.LEVEL_LOADED, data: LevelLoadedData): void;
-    onSubtitleFragProcessed(event: Events.SUBTITLE_FRAG_PROCESSED, data: SubtitleFragProcessed): void;
-    onBufferFlushing(event: Events.BUFFER_FLUSHING, data: BufferFlushingData): void;
-    onFragBuffered(event: Events.FRAG_BUFFERED, data: FragBufferedData): void;
-    onError(event: Events.ERROR, data: ErrorData): void;
-    onSubtitleTracksUpdated(event: Events.SUBTITLE_TRACKS_UPDATED, { subtitleTracks }: SubtitleTracksUpdatedData): void;
-    onSubtitleTrackSwitch(event: Events.SUBTITLE_TRACK_SWITCH, data: TrackSwitchedData): void;
-    onSubtitleTrackLoaded(event: Events.SUBTITLE_TRACK_LOADED, data: TrackLoadedData): void;
+    protected onManifestLoading(): void;
+    protected onMediaDetaching(): void;
+    private onLevelLoaded;
+    private onSubtitleFragProcessed;
+    private onBufferFlushing;
+    private onFragBuffered;
+    protected onError(event: Events.ERROR, data: ErrorData): void;
+    private onSubtitleTracksUpdated;
+    private onSubtitleTrackSwitch;
+    private onSubtitleTrackLoaded;
     _handleFragmentLoadComplete(fragLoadedData: FragLoadedData): void;
     doTick(): void;
-    protected getMaxBufferLength(mainBufferLength?: number): number;
     protected loadFragment(frag: Fragment, level: Level, targetBufferTime: number): void;
     get mediaBufferTimeRanges(): Bufferable;
 }
@@ -3030,10 +3040,6 @@ export declare interface TrackSet {
     audio?: Track;
     video?: Track;
     audiovideo?: Track;
-}
-
-declare interface TrackSwitchedData {
-    id: number;
 }
 
 declare class TransmuxerInterface {

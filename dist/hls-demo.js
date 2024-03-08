@@ -214,11 +214,10 @@
 	    // abr: true,
 	    startSeek: true
 	  },
-	  // AppleAdvancedHevcAvcHls: {
-	  //   url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
-	  //   description:
-	  //     'Advanced stream (HEVC/H.264, AC-3/AAC,  WebVTT, fMP4 segments)',
-	  // },
+	  AppleAdvancedHevcAvcHls: {
+	    url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+	    description: 'Advanced stream (HEVC/H.264, AC-3/AAC,  WebVTT, fMP4 segments)'
+	  },
 	  MuxLowLatencyHls: {
 	    url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
 	    description: 'Low-Latency HLS sample of Big Buck Bunny loop and a timer. Restarts every 12 hours. (fMP4 segments)',

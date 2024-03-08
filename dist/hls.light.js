@@ -797,76 +797,6 @@
     return ErrorDetails;
   }({});
 
-  var Logger = function Logger(label, logger) {
-    this.trace = void 0;
-    this.debug = void 0;
-    this.log = void 0;
-    this.warn = void 0;
-    this.info = void 0;
-    this.error = void 0;
-    var lb = "[" + label + "]:";
-    this.trace = noop;
-    this.debug = logger.debug.bind(null, lb);
-    this.log = logger.log.bind(null, lb);
-    this.warn = logger.warn.bind(null, lb);
-    this.info = logger.info.bind(null, lb);
-    this.error = logger.error.bind(null, lb);
-  };
-  var noop = function noop() {};
-  var fakeLogger = {
-    trace: noop,
-    debug: noop,
-    log: noop,
-    warn: noop,
-    info: noop,
-    error: noop
-  };
-  function createLogger() {
-    return _extends({}, fakeLogger);
-  }
-
-  // let lastCallTime;
-  // function formatMsgWithTimeInfo(type, msg) {
-  //   const now = Date.now();
-  //   const diff = lastCallTime ? '+' + (now - lastCallTime) : '0';
-  //   lastCallTime = now;
-  //   msg = (new Date(now)).toISOString() + ' | [' +  type + '] > ' + msg + ' ( ' + diff + ' ms )';
-  //   return msg;
-  // }
-
-  function consolePrintFn(type, id) {
-    var func = self.console[type];
-    return func ? func.bind(self.console, (id ? '[' + id + '] ' : '') + "[" + type + "] >") : noop;
-  }
-  function getLoggerFn(key, debugConfig, id) {
-    return debugConfig[key] ? debugConfig[key].bind(debugConfig) : consolePrintFn(key, id);
-  }
-  var exportedLogger = createLogger();
-  function enableLogs(debugConfig, context, id) {
-    // check that console is available
-    var newLogger = createLogger();
-    if (typeof console === 'object' && debugConfig === true || typeof debugConfig === 'object') {
-      var keys = [
-      // Remove out from list here to hard-disable a log-level
-      // 'trace',
-      'debug', 'log', 'info', 'warn', 'error'];
-      keys.forEach(function (key) {
-        newLogger[key] = getLoggerFn(key, debugConfig, id);
-      });
-      // Some browsers don't allow to use bind on console object anyway
-      // fallback to default if needed
-      try {
-        newLogger.log("Debug logs enabled for \"" + context + "\" in hls.js version " + undefined);
-      } catch (e) {
-        /* log fn threw an exception. All logger methods are no-ops. */
-        return createLogger();
-      }
-    }
-    exportedLogger = newLogger;
-    return newLogger;
-  }
-  var logger = exportedLogger;
-
   var DECIMAL_RESOLUTION_REGEX = /^(\d+)x(\d+)$/;
   var ATTR_LIST_REGEX = /(.+?)=(".*?"|.*?)(?:,|$)/g;
 
@@ -954,6 +884,82 @@
     }]);
     return AttrList;
   }();
+
+  var Logger = function Logger(label, logger) {
+    this.trace = void 0;
+    this.debug = void 0;
+    this.log = void 0;
+    this.warn = void 0;
+    this.info = void 0;
+    this.error = void 0;
+    var lb = "[" + label + "]:";
+    this.trace = noop;
+    this.debug = logger.debug.bind(null, lb);
+    this.log = logger.log.bind(null, lb);
+    this.warn = logger.warn.bind(null, lb);
+    this.info = logger.info.bind(null, lb);
+    this.error = logger.error.bind(null, lb);
+  };
+  var noop = function noop() {};
+  var fakeLogger = {
+    trace: noop,
+    debug: noop,
+    log: noop,
+    warn: noop,
+    info: noop,
+    error: noop
+  };
+  function createLogger() {
+    return _extends({}, fakeLogger);
+  }
+
+  // let lastCallTime;
+  // function formatMsgWithTimeInfo(type, msg) {
+  //   const now = Date.now();
+  //   const diff = lastCallTime ? '+' + (now - lastCallTime) : '0';
+  //   lastCallTime = now;
+  //   msg = (new Date(now)).toISOString() + ' | [' +  type + '] > ' + msg + ' ( ' + diff + ' ms )';
+  //   return msg;
+  // }
+
+  function consolePrintFn(type, id) {
+    var func = self.console[type];
+    return func ? func.bind(self.console, (id ? '[' + id + '] ' : '') + "[" + type + "] >") : noop;
+  }
+  function getLoggerFn(key, debugConfig, id) {
+    return debugConfig[key] ? debugConfig[key].bind(debugConfig) : consolePrintFn(key, id);
+  }
+  var exportedLogger = createLogger();
+  function enableLogs(debugConfig, context, id) {
+    // check that console is available
+    var newLogger = createLogger();
+    if (typeof console === 'object' && debugConfig === true || typeof debugConfig === 'object') {
+      var keys = [
+      // Remove out from list here to hard-disable a log-level
+      // 'trace',
+      'debug', 'log', 'info', 'warn', 'error'];
+      keys.forEach(function (key) {
+        newLogger[key] = getLoggerFn(key, debugConfig, id);
+      });
+      // Some browsers don't allow to use bind on console object anyway
+      // fallback to default if needed
+      try {
+        newLogger.log("Debug logs enabled for \"" + context + "\" in hls.js version " + undefined);
+      } catch (e) {
+        /* log fn threw an exception. All logger methods are no-ops. */
+        return createLogger();
+      }
+      // global exported logger uses the same functions as new logger without `id`
+      keys.forEach(function (key) {
+        exportedLogger[key] = getLoggerFn(key, debugConfig);
+      });
+    } else {
+      // Reset global exported logger
+      _extends(exportedLogger, newLogger);
+    }
+    return newLogger;
+  }
+  var logger = exportedLogger;
 
   // Avoid exporting const enum so that these values can be inlined
 
@@ -1532,7 +1538,7 @@
   // This file is inserted as a shim for modules which we do not want to include into the distro.
   // This replacement is done in the "alias" plugin of the rollup config.
   var empty = undefined;
-  var Cues = /*@__PURE__*/getDefaultExportFromCjs(empty);
+  var HevcVideoParser = /*@__PURE__*/getDefaultExportFromCjs(empty);
 
   function sliceUint8(array, start, end) {
     // @ts-expect-error This polyfills IE11 usage of Uint8Array slice.
@@ -1933,6 +1939,12 @@
     var val = readSint32(buffer, offset);
     return val < 0 ? 4294967296 + val : val;
   }
+  function readUint64(buffer, offset) {
+    var result = readUint32(buffer, offset);
+    result *= Math.pow(2, 32);
+    result += readUint32(buffer, offset + 4);
+    return result;
+  }
   function readSint32(buffer, offset) {
     return buffer[offset] << 24 | buffer[offset + 1] << 16 | buffer[offset + 2] << 8 | buffer[offset + 3];
   }
@@ -1995,14 +2007,15 @@
     var index = 8;
     var timescale = readUint32(sidx, index);
     index += 4;
-
-    // TODO: parse earliestPresentationTime and firstOffset
-    // usually zero in our case
     var earliestPresentationTime = 0;
     var firstOffset = 0;
     if (version === 0) {
+      earliestPresentationTime = readUint32(sidx, index);
+      firstOffset = readUint32(sidx, index + 4);
       index += 8;
     } else {
+      earliestPresentationTime = readUint64(sidx, index);
+      firstOffset = readUint64(sidx, index + 8);
       index += 16;
     }
 
@@ -2160,7 +2173,7 @@
         {
           var codecBox = findBox(sampleEntries, [fourCC])[0];
           var esdsBox = findBox(codecBox.subarray(28), ['esds'])[0];
-          if (esdsBox && esdsBox.length > 12) {
+          if (esdsBox && esdsBox.length > 7) {
             var i = 4;
             // ES Descriptor tag
             if (esdsBox[i++] !== 0x03) {
@@ -2275,7 +2288,9 @@
   }
   function skipBERInteger(bytes, i) {
     var limit = i + 5;
-    while (bytes[i++] & 0x80 && i < limit) {}
+    while (bytes[i++] & 0x80 && i < limit) {
+      /* do nothing */
+    }
     return i;
   }
   function toHex(x) {
@@ -2453,17 +2468,24 @@
     }
     if (videoDuration === 0 && audioDuration === 0) {
       // If duration samples are not available in the traf use sidx subsegment_duration
+      var sidxMinStart = Infinity;
+      var sidxMaxEnd = 0;
       var sidxDuration = 0;
       var sidxs = findBox(data, ['sidx']);
       for (var _i2 = 0; _i2 < sidxs.length; _i2++) {
         var sidx = parseSegmentIndex(sidxs[_i2]);
         if (sidx != null && sidx.references) {
-          sidxDuration += sidx.references.reduce(function (dur, ref) {
+          sidxMinStart = Math.min(sidxMinStart, sidx.earliestPresentationTime / sidx.timescale);
+          var subSegmentDuration = sidx.references.reduce(function (dur, ref) {
             return dur + ref.info.duration || 0;
           }, 0);
+          sidxMaxEnd = Math.max(sidxMaxEnd, subSegmentDuration + sidx.earliestPresentationTime / sidx.timescale);
+          sidxDuration = sidxMaxEnd - sidxMinStart;
         }
       }
-      return sidxDuration;
+      if (sidxDuration && isFiniteNumber(sidxDuration)) {
+        return sidxDuration;
+      }
     }
     if (videoDuration) {
       return videoDuration;
@@ -4019,10 +4041,10 @@
         var loaderContext = loader.context;
         if (loaderContext && loaderContext.url === context.url && loaderContext.level === context.level) {
           // same URL can't overlap
-          logger.trace('[playlist-loader]: playlist request ongoing');
+          this.hls.logger.trace('[playlist-loader]: playlist request ongoing');
           return;
         }
-        logger.log("[playlist-loader]: aborting previous loader for type: " + context.type);
+        this.hls.logger.log("[playlist-loader]: aborting previous loader for type: " + context.type);
         loader.abort();
       }
 
@@ -4132,7 +4154,7 @@
         // alt audio rendition in which quality levels (main)
         // contains both audio+video. but with mixed audio track not signaled
         if (!embeddedAudioFound && levels[0].audioCodec && !levels[0].attrs.AUDIO) {
-          logger.log('[playlist-loader]: audio codec signaled in quality level, but no embedded audio track signaled, create one');
+          this.hls.logger.log('[playlist-loader]: audio codec signaled in quality level, but no embedded audio track signaled, create one');
           audioTracks.unshift({
             type: 'main',
             name: 'main',
@@ -4232,7 +4254,7 @@
         message += " id: " + context.id + " group-id: \"" + context.groupId + "\"";
       }
       var error = new Error(message);
-      logger.warn("[playlist-loader]: " + message);
+      this.hls.logger.warn("[playlist-loader]: " + message);
       var details = ErrorDetails.UNKNOWN;
       var fatal = false;
       var loader = this.getInternalLoader(context);
@@ -4549,11 +4571,10 @@
       this.media = data.media;
     };
     _proto.onMediaDetaching = function onMediaDetaching() {
-      if (!this.id3Track) {
-        return;
+      if (this.id3Track) {
+        clearCurrentCues(this.id3Track);
+        this.id3Track = null;
       }
-      clearCurrentCues(this.id3Track);
-      this.id3Track = null;
       this.media = null;
       this.dateRangeCuesAppended = {};
     };
@@ -6294,7 +6315,12 @@
           var cdnAge = lastAdvanced + details.ageHeader;
           var currentGoal = Math.min(cdnAge - details.partTarget, details.targetduration * 1.5);
           if (currentGoal > 0) {
-            if (previousDetails && currentGoal > previousDetails.tuneInGoal) {
+            if (cdnAge > details.targetduration * 3) {
+              // Omit segment and part directives when the last response was more than 3 target durations ago,
+              this.log("Playlist last advanced " + lastAdvanced.toFixed(2) + "s ago. Omitting segment and part directives.");
+              msn = undefined;
+              part = undefined;
+            } else if (previousDetails != null && previousDetails.tuneInGoal && cdnAge - details.partTarget > previousDetails.tuneInGoal) {
               // If we attempted to get the next or latest playlist update, but currentGoal increased,
               // then we either can't catchup, or the "age" header cannot be trusted.
               this.warn("CDN Tune-in goal increased from: " + previousDetails.tuneInGoal + " to: " + currentGoal + " with playlist age: " + details.age);
@@ -7116,26 +7142,22 @@
       }
     };
     _proto.getAutoLevelKey = function getAutoLevelKey() {
-      var _this$hls$mainForward;
-      return this.getBwEstimate() + "_" + ((_this$hls$mainForward = this.hls.mainForwardBufferInfo) == null ? void 0 : _this$hls$mainForward.len);
+      return this.getBwEstimate() + "_" + this.getStarvationDelay().toFixed(2);
     };
     _proto.getNextABRAutoLevel = function getNextABRAutoLevel() {
       var fragCurrent = this.fragCurrent,
         partCurrent = this.partCurrent,
         hls = this.hls;
+      if (hls.levels.length <= 1) {
+        return hls.loadLevel;
+      }
       var maxAutoLevel = hls.maxAutoLevel,
         config = hls.config,
-        minAutoLevel = hls.minAutoLevel,
-        media = hls.media;
+        minAutoLevel = hls.minAutoLevel;
       var currentFragDuration = partCurrent ? partCurrent.duration : fragCurrent ? fragCurrent.duration : 0;
-
-      // playbackRate is the absolute value of the playback rate; if media.playbackRate is 0, we use 1 to load as
-      // if we're playing back at the normal rate.
-      var playbackRate = media && media.playbackRate !== 0 ? Math.abs(media.playbackRate) : 1.0;
       var avgbw = this.getBwEstimate();
       // bufferStarvationDelay is the wall-clock time left until the playback buffer is exhausted.
-      var bufferInfo = hls.mainForwardBufferInfo;
-      var bufferStarvationDelay = (bufferInfo ? bufferInfo.len : 0) / playbackRate;
+      var bufferStarvationDelay = this.getStarvationDelay();
       var bwFactor = config.abrBandWidthFactor;
       var bwUpFactor = config.abrBandWidthUpFactor;
 
@@ -7177,6 +7199,18 @@
       }
       // or if bitrate is not lower, continue to use loadLevel
       return hls.loadLevel;
+    };
+    _proto.getStarvationDelay = function getStarvationDelay() {
+      var hls = this.hls;
+      var media = hls.media;
+      if (!media) {
+        return Infinity;
+      }
+      // playbackRate is the absolute value of the playback rate; if media.playbackRate is 0, we use 1 to load as
+      // if we're playing back at the normal rate.
+      var playbackRate = media && media.playbackRate !== 0 ? Math.abs(media.playbackRate) : 1.0;
+      var bufferInfo = hls.mainForwardBufferInfo;
+      return (bufferInfo ? bufferInfo.len : 0) / playbackRate;
     };
     _proto.getBwEstimate = function getBwEstimate() {
       return this.bwEstimator.canEstimate() ? this.bwEstimator.getEstimate() : this.hls.config.abrEwmaDefaultEstimate;
@@ -7352,8 +7386,11 @@
         return nextABRAutoLevel;
       },
       set: function set(nextLevel) {
-        var value = Math.max(this.hls.minAutoLevel, nextLevel);
-        if (this._nextAutoLevel != value) {
+        var _this$hls3 = this.hls,
+          maxAutoLevel = _this$hls3.maxAutoLevel,
+          minAutoLevel = _this$hls3.minAutoLevel;
+        var value = Math.min(Math.max(nextLevel, minAutoLevel), maxAutoLevel);
+        if (this._nextAutoLevel !== value) {
           this.nextAutoLevelKey = '';
           this._nextAutoLevel = value;
         }
@@ -7385,40 +7422,29 @@
      * Return true if `media`'s buffered include `position`
      */
     BufferHelper.isBuffered = function isBuffered(media, position) {
-      try {
-        if (media) {
-          var buffered = BufferHelper.getBuffered(media);
-          for (var i = 0; i < buffered.length; i++) {
-            if (position >= buffered.start(i) && position <= buffered.end(i)) {
-              return true;
-            }
+      if (media) {
+        var buffered = BufferHelper.getBuffered(media);
+        for (var i = buffered.length; i--;) {
+          if (position >= buffered.start(i) && position <= buffered.end(i)) {
+            return true;
           }
         }
-      } catch (error) {
-        // this is to catch
-        // InvalidStateError: Failed to read the 'buffered' property from 'SourceBuffer':
-        // This SourceBuffer has been removed from the parent media source
       }
       return false;
     };
     BufferHelper.bufferInfo = function bufferInfo(media, pos, maxHoleDuration) {
-      try {
-        if (media) {
-          var vbuffered = BufferHelper.getBuffered(media);
+      if (media) {
+        var vbuffered = BufferHelper.getBuffered(media);
+        if (vbuffered.length) {
           var buffered = [];
-          var i;
-          for (i = 0; i < vbuffered.length; i++) {
+          for (var i = 0; i < vbuffered.length; i++) {
             buffered.push({
               start: vbuffered.start(i),
               end: vbuffered.end(i)
             });
           }
-          return this.bufferedInfo(buffered, pos, maxHoleDuration);
+          return BufferHelper.bufferedInfo(buffered, pos, maxHoleDuration);
         }
-      } catch (error) {
-        // this is to catch
-        // InvalidStateError: Failed to read the 'buffered' property from 'SourceBuffer':
-        // This SourceBuffer has been removed from the parent media source
       }
       return {
         len: 0,
@@ -7431,12 +7457,7 @@
       pos = Math.max(0, pos);
       // sort on buffer.start/smaller end (IE does not always return sorted buffered range)
       buffered.sort(function (a, b) {
-        var diff = a.start - b.start;
-        if (diff) {
-          return diff;
-        } else {
-          return b.end - a.end;
-        }
+        return a.start - b.start || b.end - a.end;
       });
       var buffered2 = [];
       if (maxHoleDuration) {
@@ -7504,7 +7525,7 @@
      */;
     BufferHelper.getBuffered = function getBuffered(media) {
       try {
-        return media.buffered;
+        return media.buffered || noopBuffered;
       } catch (e) {
         logger.log('failed to get media.buffered', e);
         return noopBuffered;
@@ -7531,24 +7552,23 @@
         this.executeNext(type);
       }
     };
-    _proto.insertAbort = function insertAbort(operation, type) {
-      var queue = this.queues[type];
-      queue.unshift(operation);
-      this.executeNext(type);
-    };
     _proto.appendBlocker = function appendBlocker(type) {
-      var execute;
-      var promise = new Promise(function (resolve) {
-        execute = resolve;
+      var _this = this;
+      return new Promise(function (resolve) {
+        var operation = {
+          execute: resolve,
+          onStart: function onStart() {},
+          onComplete: function onComplete() {},
+          onError: function onError() {}
+        };
+        _this.append(operation, type);
       });
-      var operation = {
-        execute: execute,
-        onStart: function onStart() {},
-        onComplete: function onComplete() {},
-        onError: function onError() {}
-      };
-      this.append(operation, type);
-      return promise;
+    };
+    _proto.unblockAudio = function unblockAudio(op) {
+      var queue = this.queues.audio;
+      if (queue[0] === op) {
+        this.shiftAndExecuteNext('audio');
+      }
     };
     _proto.executeNext = function executeNext(type) {
       var queue = this.queues[type];
@@ -7583,7 +7603,7 @@
   var VIDEO_CODEC_PROFILE_REPLACE = /(avc[1234]|hvc1|hev1|dvh[1e]|vp09|av01)(?:\.[^.,]+)+/;
   var BufferController = /*#__PURE__*/function (_Logger) {
     _inheritsLoose(BufferController, _Logger);
-    function BufferController(hls) {
+    function BufferController(hls, fragmentTracker) {
       var _this;
       _this = _Logger.call(this, 'buffer-controller', hls.logger) || this;
       // The level details used to determine duration, target-duration and live
@@ -7595,6 +7615,7 @@
       // References to event listeners for each SourceBuffer, so that they can be referenced for event removal
       _this.listeners = void 0;
       _this.hls = void 0;
+      _this.fragmentTracker = void 0;
       // The number of BUFFER_CODEC events received before any sourceBuffers are created
       _this.bufferCodecEventsExpected = 0;
       // The total number of BUFFER_CODEC events received
@@ -7605,6 +7626,10 @@
       _this.mediaSource = null;
       // Last MP3 audio chunk appended
       _this.lastMpegAudioChunk = null;
+      // Audio fragment blocked from appending until corresponding video appends or context changes
+      _this.blockedAudioAppend = null;
+      // Keep track of video append position for unblocking audio
+      _this.lastVideoAppendEnd = 0;
       _this.appendSource = void 0;
       // counters
       _this.appendErrors = {
@@ -7635,7 +7660,10 @@
         _this.log('Media source opened');
         if (media) {
           media.removeEventListener('emptied', _this._onMediaEmptied);
-          _this.updateMediaElementDuration();
+          var durationAndRange = _this.getDurationAndRange();
+          if (durationAndRange) {
+            _this.updateMediaSource(durationAndRange);
+          }
           _this.hls.trigger(Events.MEDIA_ATTACHED, {
             media: media,
             mediaSource: mediaSource
@@ -7662,7 +7690,8 @@
         }
       };
       _this.hls = hls;
-      _this.appendSource = hls.config.preferManagedMediaSource;
+      _this.fragmentTracker = fragmentTracker;
+      _this.appendSource = hls.config.preferManagedMediaSource && typeof self !== 'undefined' && self.ManagedMediaSource;
       _this._initSourceBuffer();
       _this.registerListeners();
       return _this;
@@ -7676,7 +7705,7 @@
       this.details = null;
       this.lastMpegAudioChunk = null;
       // @ts-ignore
-      this.hls = null;
+      this.hls = this.fragmentTracker = null;
       // @ts-ignore
       this._onMediaSourceOpen = this._onMediaSourceClose = null;
       // @ts-ignore
@@ -7728,6 +7757,8 @@
         audiovideo: 0
       };
       this.lastMpegAudioChunk = null;
+      this.blockedAudioAppend = null;
+      this.lastVideoAppendEnd = 0;
     };
     _proto.onManifestLoading = function onManifestLoading() {
       this.bufferCodecEventsExpected = this._bufferCodecEventsTotal = 0;
@@ -7756,8 +7787,10 @@
         ms.addEventListener('sourceopen', this._onMediaSourceOpen);
         ms.addEventListener('sourceended', this._onMediaSourceEnded);
         ms.addEventListener('sourceclose', this._onMediaSourceClose);
-        ms.addEventListener('startstreaming', this._onStartStreaming);
-        ms.addEventListener('endstreaming', this._onEndStreaming);
+        if (this.appendSource) {
+          ms.addEventListener('startstreaming', this._onStartStreaming);
+          ms.addEventListener('endstreaming', this._onEndStreaming);
+        }
 
         // cache the locally generated object url
         var objectUrl = this._objectUrl = self.URL.createObjectURL(ms);
@@ -7802,36 +7835,38 @@
         mediaSource.removeEventListener('sourceopen', this._onMediaSourceOpen);
         mediaSource.removeEventListener('sourceended', this._onMediaSourceEnded);
         mediaSource.removeEventListener('sourceclose', this._onMediaSourceClose);
-        mediaSource.removeEventListener('startstreaming', this._onStartStreaming);
-        mediaSource.removeEventListener('endstreaming', this._onEndStreaming);
-
-        // Detach properly the MediaSource from the HTMLMediaElement as
-        // suggested in https://github.com/w3c/media-source/issues/53.
-        if (media) {
-          media.removeEventListener('emptied', this._onMediaEmptied);
-          if (_objectUrl) {
-            self.URL.revokeObjectURL(_objectUrl);
-          }
-
-          // clean up video tag src only if it's our own url. some external libraries might
-          // hijack the video tag and change its 'src' without destroying the Hls instance first
-          if (this.mediaSrc === _objectUrl) {
-            media.removeAttribute('src');
-            if (this.appendSource) {
-              removeSourceChildren(media);
-            }
-            media.load();
-          } else {
-            this.warn('media|source.src was changed by a third party - skip cleanup');
-          }
+        if (this.appendSource) {
+          mediaSource.removeEventListener('startstreaming', this._onStartStreaming);
+          mediaSource.removeEventListener('endstreaming', this._onEndStreaming);
         }
         this.mediaSource = null;
-        this.media = null;
         this._objectUrl = null;
-        this.bufferCodecEventsExpected = this._bufferCodecEventsTotal;
-        this.pendingTracks = {};
-        this.tracks = {};
       }
+
+      // Detach properly the MediaSource from the HTMLMediaElement as
+      // suggested in https://github.com/w3c/media-source/issues/53.
+      if (media) {
+        media.removeEventListener('emptied', this._onMediaEmptied);
+        if (_objectUrl) {
+          self.URL.revokeObjectURL(_objectUrl);
+        }
+
+        // clean up video tag src only if it's our own url. some external libraries might
+        // hijack the video tag and change its 'src' without destroying the Hls instance first
+        if (this.mediaSrc === _objectUrl) {
+          media.removeAttribute('src');
+          if (this.appendSource) {
+            removeSourceChildren(media);
+          }
+          media.load();
+        } else {
+          this.warn('media|source.src was changed by a third party - skip cleanup');
+        }
+        this.media = null;
+      }
+      this.bufferCodecEventsExpected = this._bufferCodecEventsTotal;
+      this.pendingTracks = {};
+      this.tracks = {};
       this.hls.trigger(Events.MEDIA_DETACHED, undefined);
     };
     _proto.onBufferReset = function onBufferReset() {
@@ -7840,6 +7875,7 @@
         _this2.resetBuffer(type);
       });
       this._initSourceBuffer();
+      this.hls.resumeBuffering();
     };
     _proto.resetBuffer = function resetBuffer(type) {
       var sb = this.sourceBuffer[type];
@@ -7864,9 +7900,10 @@
       var trackNames = Object.keys(data);
       trackNames.forEach(function (trackName) {
         if (sourceBufferCount) {
+          var _track$buffer;
           // check if SourceBuffer codec needs to change
           var track = _this3.tracks[trackName];
-          if (track && typeof track.buffer.changeType === 'function') {
+          if (track && typeof ((_track$buffer = track.buffer) == null ? void 0 : _track$buffer.changeType) === 'function') {
             var _trackCodec;
             var _data$trackName = data[trackName],
               id = _data$trackName.id,
@@ -7880,7 +7917,7 @@
             var nextCodec = (_trackCodec = trackCodec) == null ? void 0 : _trackCodec.replace(VIDEO_CODEC_PROFILE_REPLACE, '$1');
             if (trackCodec && currentCodec !== nextCodec) {
               if (trackName.slice(0, 5) === 'audio') {
-                trackCodec = getCodecCompatibleName(trackCodec, _this3.hls.config.preferManagedMediaSource);
+                trackCodec = getCodecCompatibleName(trackCodec, _this3.appendSource);
               }
               var mimeType = container + ";codecs=" + trackCodec;
               _this3.appendChangeType(trackName, mimeType);
@@ -7934,17 +7971,52 @@
       };
       operationQueue.append(operation, type, !!this.pendingTracks[type]);
     };
+    _proto.blockAudio = function blockAudio(partOrFrag) {
+      var _this$fragmentTracker,
+        _this5 = this;
+      var pStart = partOrFrag.start;
+      var pTime = pStart + partOrFrag.duration * 0.05;
+      var atGap = ((_this$fragmentTracker = this.fragmentTracker.getAppendedFrag(pStart, PlaylistLevelType.MAIN)) == null ? void 0 : _this$fragmentTracker.gap) === true;
+      if (atGap) {
+        return;
+      }
+      var op = {
+        execute: function execute() {
+          var _this5$fragmentTracke;
+          if (_this5.lastVideoAppendEnd > pTime || _this5.sourceBuffer.video && BufferHelper.isBuffered(_this5.sourceBuffer.video, pTime) || ((_this5$fragmentTracke = _this5.fragmentTracker.getAppendedFrag(pTime, PlaylistLevelType.MAIN)) == null ? void 0 : _this5$fragmentTracke.gap) === true) {
+            _this5.blockedAudioAppend = null;
+            _this5.operationQueue.shiftAndExecuteNext('audio');
+          }
+        },
+        onStart: function onStart() {},
+        onComplete: function onComplete() {},
+        onError: function onError() {}
+      };
+      this.blockedAudioAppend = {
+        op: op,
+        frag: partOrFrag
+      };
+      this.operationQueue.append(op, 'audio', true);
+    };
+    _proto.unblockAudio = function unblockAudio() {
+      var blockedAudioAppend = this.blockedAudioAppend;
+      if (blockedAudioAppend) {
+        this.blockedAudioAppend = null;
+        this.operationQueue.unblockAudio(blockedAudioAppend.op);
+      }
+    };
     _proto.onBufferAppending = function onBufferAppending(event, eventData) {
-      var _this5 = this;
-      var hls = this.hls,
-        operationQueue = this.operationQueue,
+      var _this6 = this;
+      var operationQueue = this.operationQueue,
         tracks = this.tracks;
       var data = eventData.data,
         type = eventData.type,
+        parent = eventData.parent,
         frag = eventData.frag,
         part = eventData.part,
         chunkMeta = eventData.chunkMeta;
       var chunkStats = chunkMeta.buffering[type];
+      var sn = frag.sn;
       var bufferAppendingStart = self.performance.now();
       chunkStats.start = bufferAppendingStart;
       var fragBuffering = frag.stats.buffering;
@@ -7967,21 +8039,50 @@
         checkTimestampOffset = !this.lastMpegAudioChunk || chunkMeta.id === 1 || this.lastMpegAudioChunk.sn !== chunkMeta.sn;
         this.lastMpegAudioChunk = chunkMeta;
       }
-      var fragStart = frag.start;
+
+      // Block audio append until overlapping video append
+      var videoSb = this.sourceBuffer.video;
+      if (videoSb && sn !== 'initSegment') {
+        var partOrFrag = part || frag;
+        var blockedAudioAppend = this.blockedAudioAppend;
+        if (type === 'audio' && parent !== 'main' && !this.blockedAudioAppend) {
+          var pStart = partOrFrag.start;
+          var pTime = pStart + partOrFrag.duration * 0.05;
+          var vbuffered = videoSb.buffered;
+          var vappending = this.operationQueue.current('video');
+          if (!vbuffered.length && !vappending) {
+            // wait for video before appending audio
+            this.blockAudio(partOrFrag);
+          } else if (!vappending && !BufferHelper.isBuffered(videoSb, pTime) && this.lastVideoAppendEnd < pTime) {
+            // audio is ahead of video
+            this.blockAudio(partOrFrag);
+          }
+        } else if (type === 'video') {
+          var videoAppendEnd = partOrFrag.end;
+          if (blockedAudioAppend) {
+            var audioStart = blockedAudioAppend.frag.start;
+            if (videoAppendEnd > audioStart || videoAppendEnd < this.lastVideoAppendEnd || BufferHelper.isBuffered(videoSb, audioStart)) {
+              this.unblockAudio();
+            }
+          }
+          this.lastVideoAppendEnd = videoAppendEnd;
+        }
+      }
+      var fragStart = (part || frag).start;
       var operation = {
         execute: function execute() {
           chunkStats.executeStart = self.performance.now();
           if (checkTimestampOffset) {
-            var sb = _this5.sourceBuffer[type];
+            var sb = _this6.sourceBuffer[type];
             if (sb) {
               var delta = fragStart - sb.timestampOffset;
               if (Math.abs(delta) >= 0.1) {
-                _this5.log("Updating audio SourceBuffer timestampOffset to " + fragStart + " (delta: " + delta + ") sn: " + frag.sn + ")");
+                _this6.log("Updating audio SourceBuffer timestampOffset to " + fragStart + " (delta: " + delta + ") sn: " + sn + ")");
                 sb.timestampOffset = fragStart;
               }
             }
           }
-          _this5.appendExecutor(data, type);
+          _this6.appendExecutor(data, type);
         },
         onStart: function onStart() {
           // logger.debug(`[buffer-controller]: ${type} SourceBuffer updatestart`);
@@ -7996,19 +8097,19 @@
           if (partBuffering && partBuffering.first === 0) {
             partBuffering.first = end;
           }
-          var sourceBuffer = _this5.sourceBuffer;
+          var sourceBuffer = _this6.sourceBuffer;
           var timeRanges = {};
           for (var _type in sourceBuffer) {
             timeRanges[_type] = BufferHelper.getBuffered(sourceBuffer[_type]);
           }
-          _this5.appendErrors[type] = 0;
+          _this6.appendErrors[type] = 0;
           if (type === 'audio' || type === 'video') {
-            _this5.appendErrors.audiovideo = 0;
+            _this6.appendErrors.audiovideo = 0;
           } else {
-            _this5.appendErrors.audio = 0;
-            _this5.appendErrors.video = 0;
+            _this6.appendErrors.audio = 0;
+            _this6.appendErrors.video = 0;
           }
-          _this5.hls.trigger(Events.BUFFER_APPENDED, {
+          _this6.hls.trigger(Events.BUFFER_APPENDED, {
             type: type,
             frag: frag,
             part: part,
@@ -8036,51 +8137,57 @@
             // let's stop appending any segments, and report BUFFER_FULL_ERROR error
             event.details = ErrorDetails.BUFFER_FULL_ERROR;
           } else {
-            var appendErrorCount = ++_this5.appendErrors[type];
+            var appendErrorCount = ++_this6.appendErrors[type];
             event.details = ErrorDetails.BUFFER_APPEND_ERROR;
             /* with UHD content, we could get loop of quota exceeded error until
               browser is able to evict some data from sourcebuffer. Retrying can help recover.
             */
-            _this5.warn("Failed " + appendErrorCount + "/" + hls.config.appendErrorMaxRetry + " times to append segment in \"" + type + "\" sourceBuffer");
-            if (appendErrorCount >= hls.config.appendErrorMaxRetry) {
+            _this6.warn("Failed " + appendErrorCount + "/" + _this6.hls.config.appendErrorMaxRetry + " times to append segment in \"" + type + "\" sourceBuffer");
+            if (appendErrorCount >= _this6.hls.config.appendErrorMaxRetry) {
               event.fatal = true;
             }
           }
-          hls.trigger(Events.ERROR, event);
+          _this6.hls.trigger(Events.ERROR, event);
         }
       };
       operationQueue.append(operation, type, !!this.pendingTracks[type]);
     };
-    _proto.onBufferFlushing = function onBufferFlushing(event, data) {
-      var _this6 = this;
-      var operationQueue = this.operationQueue;
-      var flushOperation = function flushOperation(type) {
-        return {
-          execute: _this6.removeExecutor.bind(_this6, type, data.startOffset, data.endOffset),
-          onStart: function onStart() {
-            // logger.debug(`[buffer-controller]: Started flushing ${data.startOffset} -> ${data.endOffset} for ${type} Source Buffer`);
-          },
-          onComplete: function onComplete() {
-            // logger.debug(`[buffer-controller]: Finished flushing ${data.startOffset} -> ${data.endOffset} for ${type} Source Buffer`);
-            _this6.hls.trigger(Events.BUFFER_FLUSHED, {
-              type: type
-            });
-          },
-          onError: function onError(error) {
-            _this6.warn("Failed to remove from " + type + " SourceBuffer", error);
-          }
-        };
+    _proto.getFlushOp = function getFlushOp(type, start, end) {
+      var _this7 = this;
+      return {
+        execute: function execute() {
+          _this7.removeExecutor(type, start, end);
+        },
+        onStart: function onStart() {
+          // logger.debug(`[buffer-controller]: Started flushing ${data.startOffset} -> ${data.endOffset} for ${type} Source Buffer`);
+        },
+        onComplete: function onComplete() {
+          // logger.debug(`[buffer-controller]: Finished flushing ${data.startOffset} -> ${data.endOffset} for ${type} Source Buffer`);
+          _this7.hls.trigger(Events.BUFFER_FLUSHED, {
+            type: type
+          });
+        },
+        onError: function onError(error) {
+          _this7.warn("Failed to remove from " + type + " SourceBuffer", error);
+        }
       };
-      if (data.type) {
-        operationQueue.append(flushOperation(data.type), data.type);
+    };
+    _proto.onBufferFlushing = function onBufferFlushing(event, data) {
+      var _this8 = this;
+      var operationQueue = this.operationQueue;
+      var type = data.type,
+        startOffset = data.startOffset,
+        endOffset = data.endOffset;
+      if (type) {
+        operationQueue.append(this.getFlushOp(type, startOffset, endOffset), type);
       } else {
-        this.getSourceBufferTypes().forEach(function (type) {
-          operationQueue.append(flushOperation(type), type);
+        this.getSourceBufferTypes().forEach(function (sbType) {
+          operationQueue.append(_this8.getFlushOp(sbType, startOffset, endOffset), sbType);
         });
       }
     };
     _proto.onFragParsed = function onFragParsed(event, data) {
-      var _this7 = this;
+      var _this9 = this;
       var frag = data.frag,
         part = data.part;
       var buffersAppendedTo = [];
@@ -8102,7 +8209,7 @@
           part.stats.buffering.end = now;
         }
         var stats = part ? part.stats : frag.stats;
-        _this7.hls.trigger(Events.FRAG_BUFFERED, {
+        _this9.hls.trigger(Events.FRAG_BUFFERED, {
           frag: frag,
           part: part,
           stats: stats,
@@ -8122,14 +8229,17 @@
     // an undefined data.type will mark all buffers as EOS.
     ;
     _proto.onBufferEos = function onBufferEos(event, data) {
-      var _this8 = this;
+      var _this10 = this;
+      if (data.type === 'video') {
+        this.unblockAudio();
+      }
       var ended = this.getSourceBufferTypes().reduce(function (acc, type) {
-        var sb = _this8.sourceBuffer[type];
+        var sb = _this10.sourceBuffer[type];
         if (sb && (!data.type || data.type === type)) {
           sb.ending = true;
           if (!sb.ended) {
             sb.ended = true;
-            _this8.log(type + " sourceBuffer now EOS");
+            _this10.log(type + " sourceBuffer now EOS");
           }
         }
         return acc && !!(!sb || sb.ended);
@@ -8137,35 +8247,42 @@
       if (ended) {
         this.log("Queueing mediaSource.endOfStream()");
         this.blockBuffers(function () {
-          _this8.getSourceBufferTypes().forEach(function (type) {
-            var sb = _this8.sourceBuffer[type];
+          _this10.getSourceBufferTypes().forEach(function (type) {
+            var sb = _this10.sourceBuffer[type];
             if (sb) {
               sb.ending = false;
             }
           });
-          var mediaSource = _this8.mediaSource;
+          var mediaSource = _this10.mediaSource;
           if (!mediaSource || mediaSource.readyState !== 'open') {
             if (mediaSource) {
-              _this8.log("Could not call mediaSource.endOfStream(). mediaSource.readyState: " + mediaSource.readyState);
+              _this10.log("Could not call mediaSource.endOfStream(). mediaSource.readyState: " + mediaSource.readyState);
             }
             return;
           }
-          _this8.log("Calling mediaSource.endOfStream()");
+          _this10.log("Calling mediaSource.endOfStream()");
           // Allow this to throw and be caught by the enqueueing function
           mediaSource.endOfStream();
         });
       }
     };
     _proto.onLevelUpdated = function onLevelUpdated(event, _ref) {
+      var _this11 = this;
       var details = _ref.details;
       if (!details.fragments.length) {
         return;
       }
       this.details = details;
+      var durationAndRange = this.getDurationAndRange();
+      if (!durationAndRange) {
+        return;
+      }
       if (this.getSourceBufferTypes().length) {
-        this.blockBuffers(this.updateMediaElementDuration.bind(this));
+        this.blockBuffers(function () {
+          return _this11.updateMediaSource(durationAndRange);
+        });
       } else {
-        this.updateMediaElementDuration();
+        this.updateMediaSource(durationAndRange);
       }
     };
     _proto.trimBuffers = function trimBuffers() {
@@ -8198,7 +8315,7 @@
       }
     };
     _proto.flushBackBuffer = function flushBackBuffer(currentTime, targetDuration, targetBackBufferPosition) {
-      var _this9 = this;
+      var _this12 = this;
       var details = this.details,
         sourceBuffer = this.sourceBuffer;
       var sourceBufferTypes = this.getSourceBufferTypes();
@@ -8208,20 +8325,20 @@
           var buffered = BufferHelper.getBuffered(sb);
           // when target buffer start exceeds actual buffer start
           if (buffered.length > 0 && targetBackBufferPosition > buffered.start(0)) {
-            _this9.hls.trigger(Events.BACK_BUFFER_REACHED, {
+            _this12.hls.trigger(Events.BACK_BUFFER_REACHED, {
               bufferEnd: targetBackBufferPosition
             });
 
             // Support for deprecated event:
             if (details != null && details.live) {
-              _this9.hls.trigger(Events.LIVE_BACK_BUFFER_REACHED, {
+              _this12.hls.trigger(Events.LIVE_BACK_BUFFER_REACHED, {
                 bufferEnd: targetBackBufferPosition
               });
             } else if (sb.ended && buffered.end(buffered.length - 1) - currentTime < targetDuration * 2) {
-              _this9.log("Cannot flush " + type + " back buffer while SourceBuffer is in ended state");
+              _this12.log("Cannot flush " + type + " back buffer while SourceBuffer is in ended state");
               return;
             }
-            _this9.hls.trigger(Events.BUFFER_FLUSHING, {
+            _this12.hls.trigger(Events.BUFFER_FLUSHING, {
               startOffset: 0,
               endOffset: targetBackBufferPosition,
               type: type
@@ -8231,7 +8348,7 @@
       });
     };
     _proto.flushFrontBuffer = function flushFrontBuffer(currentTime, targetDuration, targetFrontBufferPosition) {
-      var _this10 = this;
+      var _this13 = this;
       var sourceBuffer = this.sourceBuffer;
       var sourceBufferTypes = this.getSourceBufferTypes();
       sourceBufferTypes.forEach(function (type) {
@@ -8249,10 +8366,10 @@
           if (targetFrontBufferPosition > bufferStart || currentTime >= bufferStart && currentTime <= bufferEnd) {
             return;
           } else if (sb.ended && currentTime - bufferEnd < 2 * targetDuration) {
-            _this10.log("Cannot flush " + type + " front buffer while SourceBuffer is in ended state");
+            _this13.log("Cannot flush " + type + " front buffer while SourceBuffer is in ended state");
             return;
           }
-          _this10.hls.trigger(Events.BUFFER_FLUSHING, {
+          _this13.hls.trigger(Events.BUFFER_FLUSHING, {
             startOffset: bufferStart,
             endOffset: Infinity,
             type: type
@@ -8266,9 +8383,9 @@
      * 'liveDurationInfinity` is set to `true`
      * More details: https://github.com/video-dev/hls.js/issues/355
      */;
-    _proto.updateMediaElementDuration = function updateMediaElementDuration() {
+    _proto.getDurationAndRange = function getDurationAndRange() {
       if (!this.details || !this.media || !this.mediaSource || this.mediaSource.readyState !== 'open') {
-        return;
+        return null;
       }
       var details = this.details,
         hls = this.hls,
@@ -8280,25 +8397,40 @@
       if (details.live && hls.config.liveDurationInfinity) {
         // Override duration to Infinity
         mediaSource.duration = Infinity;
-        this.updateSeekableRange(details);
+        var len = details.fragments.length;
+        if (len && details.live && !!mediaSource.setLiveSeekableRange) {
+          var start = Math.max(0, details.fragments[0].start);
+          var end = Math.max(start, start + details.totalduration);
+          return {
+            duration: Infinity,
+            start: start,
+            end: end
+          };
+        }
+        return {
+          duration: Infinity
+        };
       } else if (levelDuration > msDuration && levelDuration > mediaDuration || !isFiniteNumber(mediaDuration)) {
-        // levelDuration was the last value we set.
-        // not using mediaSource.duration as the browser may tweak this value
-        // only update Media Source duration if its value increase, this is to avoid
-        // flushing already buffered portion when switching between quality level
-        this.log("Updating Media Source duration to " + levelDuration.toFixed(3));
-        mediaSource.duration = levelDuration;
+        return {
+          duration: levelDuration
+        };
       }
+      return null;
     };
-    _proto.updateSeekableRange = function updateSeekableRange(levelDetails) {
-      var mediaSource = this.mediaSource;
-      var fragments = levelDetails.fragments;
-      var len = fragments.length;
-      if (len && levelDetails.live && mediaSource != null && mediaSource.setLiveSeekableRange) {
-        var start = Math.max(0, fragments[0].start);
-        var end = Math.max(start, start + levelDetails.totalduration);
-        this.log("Media Source duration is set to " + mediaSource.duration + ". Setting seekable range to " + start + "-" + end + ".");
-        mediaSource.setLiveSeekableRange(start, end);
+    _proto.updateMediaSource = function updateMediaSource(_ref2) {
+      var duration = _ref2.duration,
+        start = _ref2.start,
+        end = _ref2.end;
+      if (!this.media || !this.mediaSource || this.mediaSource.readyState !== 'open') {
+        return;
+      }
+      if (isFiniteNumber(duration)) {
+        this.log("Updating Media Source duration to " + duration.toFixed(3));
+      }
+      this.mediaSource.duration = duration;
+      if (start !== undefined && end !== undefined) {
+        this.log("Media Source duration is set to " + this.mediaSource.duration + ". Setting seekable range to " + start + "-" + end + ".");
+        this.mediaSource.setLiveSeekableRange(start, end);
       }
     };
     _proto.checkPendingTracks = function checkPendingTracks() {
@@ -8337,7 +8469,7 @@
       }
     };
     _proto.createSourceBuffers = function createSourceBuffers(tracks) {
-      var _this11 = this;
+      var _this14 = this;
       var sourceBuffer = this.sourceBuffer,
         mediaSource = this.mediaSource;
       if (!mediaSource) {
@@ -8353,28 +8485,30 @@
           var codec = track.levelCodec || track.codec;
           if (codec) {
             if (trackName.slice(0, 5) === 'audio') {
-              codec = getCodecCompatibleName(codec, _this11.hls.config.preferManagedMediaSource);
+              codec = getCodecCompatibleName(codec, _this14.appendSource);
             }
           }
           var mimeType = track.container + ";codecs=" + codec;
-          _this11.log("creating sourceBuffer(" + mimeType + ")");
+          _this14.log("creating sourceBuffer(" + mimeType + ")");
           try {
-            var sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(_this11.refineMimeType(mimeType));
+            var sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(_this14.refineMimeType(mimeType));
             var sbName = trackName;
-            _this11.addBufferListener(sbName, 'updatestart', _this11._onSBUpdateStart);
-            _this11.addBufferListener(sbName, 'updateend', _this11._onSBUpdateEnd);
-            _this11.addBufferListener(sbName, 'error', _this11._onSBUpdateError);
+            _this14.addBufferListener(sbName, 'updatestart', _this14._onSBUpdateStart);
+            _this14.addBufferListener(sbName, 'updateend', _this14._onSBUpdateEnd);
+            _this14.addBufferListener(sbName, 'error', _this14._onSBUpdateError);
             // ManagedSourceBuffer bufferedchange event
-            _this11.addBufferListener(sbName, 'bufferedchange', function (type, event) {
-              // If media was ejected check for a change. Added ranges are redundant with changes on 'updateend' event.
-              var removedRanges = event.removedRanges;
-              if (removedRanges != null && removedRanges.length) {
-                _this11.hls.trigger(Events.BUFFER_FLUSHED, {
-                  type: trackName
-                });
-              }
-            });
-            _this11.tracks[trackName] = {
+            if (_this14.appendSource) {
+              _this14.addBufferListener(sbName, 'bufferedchange', function (type, event) {
+                // If media was ejected check for a change. Added ranges are redundant with changes on 'updateend' event.
+                var removedRanges = event.removedRanges;
+                if (removedRanges != null && removedRanges.length) {
+                  _this14.hls.trigger(Events.BUFFER_FLUSHED, {
+                    type: trackName
+                  });
+                }
+              });
+            }
+            _this14.tracks[trackName] = {
               buffer: sb,
               codec: codec,
               container: track.container,
@@ -8383,8 +8517,8 @@
               id: track.id
             };
           } catch (err) {
-            _this11.error("error while trying to add sourceBuffer: " + err.message);
-            _this11.hls.trigger(Events.ERROR, {
+            _this14.error("error while trying to add sourceBuffer: " + err.message);
+            _this14.hls.trigger(Events.ERROR, {
               type: ErrorTypes.MEDIA_ERROR,
               details: ErrorDetails.BUFFER_ADD_CODEC_ERROR,
               fatal: false,
@@ -8487,6 +8621,7 @@
         }
         return;
       }
+      sb.ending = false;
       sb.ended = false;
       sb.appendBuffer(data);
     }
@@ -8496,7 +8631,7 @@
     // upon completion, since we already do it here
     ;
     _proto.blockBuffers = function blockBuffers(onUnblocked, buffers) {
-      var _this12 = this;
+      var _this15 = this;
       if (buffers === void 0) {
         buffers = this.getSourceBufferTypes();
       }
@@ -8511,11 +8646,15 @@
       var blockingOperations = buffers.map(function (type) {
         return operationQueue.appendBlocker(type);
       });
-      Promise.all(blockingOperations).then(function () {
+      var audioBlocked = buffers.length > 1 && !!this.blockedAudioAppend;
+      if (audioBlocked) {
+        this.unblockAudio();
+      }
+      Promise.all(blockingOperations).then(function (result) {
         // logger.debug(`[buffer-controller]: Blocking operation resolved; unblocking ${buffers} SourceBuffer`);
         onUnblocked();
-        buffers.forEach(function (type) {
-          var sb = _this12.sourceBuffer[type];
+        buffers.forEach(function (type, i) {
+          var sb = _this15.sourceBuffer[type];
           // Only cycle the queue if the SB is not updating. There's a bug in Chrome which sets the SB updating flag to
           // true when changing the MediaSource duration (https://bugs.chromium.org/p/chromium/issues/detail?id=959359&can=2&q=mediasource%20duration)
           // While this is a workaround, it's probably useful to have around
@@ -8670,6 +8809,7 @@
     };
     _proto.onMediaDetaching = function onMediaDetaching() {
       this.stopCapping();
+      this.media = null;
     };
     _proto.detectPlayerSize = function detectPlayerSize() {
       if (this.media) {
@@ -8685,7 +8825,7 @@
             hls.logger.log("Setting autoLevelCapping to " + maxLevel + ": " + levels[maxLevel].height + "p@" + levels[maxLevel].bitrate + " for media " + this.mediaWidth + "x" + this.mediaHeight);
           }
           hls.autoLevelCapping = maxLevel;
-          if (hls.autoLevelCapping > this.autoLevelCapping && this.streamController) {
+          if (hls.autoLevelEnabled && hls.autoLevelCapping > this.autoLevelCapping && this.streamController) {
             // if auto level capping has a higher value for the previous one, flush the buffer using nextLevelSwitch
             // usually happen when the user go to the fullscreen mode.
             this.streamController.nextLevelSwitch();
@@ -8833,9 +8973,11 @@
     };
     _proto.registerListeners = function registerListeners() {
       this.hls.on(Events.MEDIA_ATTACHING, this.onMediaAttaching, this);
+      this.hls.on(Events.MEDIA_DETACHING, this.onMediaDetaching, this);
     };
     _proto.unregisterListeners = function unregisterListeners() {
       this.hls.off(Events.MEDIA_ATTACHING, this.onMediaAttaching, this);
+      this.hls.off(Events.MEDIA_DETACHING, this.onMediaDetaching, this);
     };
     _proto.destroy = function destroy() {
       if (this.timer) {
@@ -8856,6 +8998,9 @@
         self.clearInterval(this.timer);
         this.timer = self.setInterval(this.checkFPSInterval.bind(this), config.fpsDroppedMonitoringPeriod);
       }
+    };
+    _proto.onMediaDetaching = function onMediaDetaching() {
+      this.media = null;
     };
     _proto.checkFPS = function checkFPS(video, decodedFrames, droppedFrames) {
       var currentTime = performance.now();
@@ -10140,7 +10285,7 @@
   });
   function timelineConfig() {
     return {
-      cueHandler: Cues,
+      cueHandler: HevcVideoParser,
       // used by timeline-controller
       enableWebVTT: false,
       // used by timeline-controller
@@ -10569,7 +10714,12 @@
         if (curLevel.fragmentError === 0) {
           curLevel.loadError = 0;
         }
-        this.playlistLoaded(level, data, curLevel.details);
+        // Ignore matching details populated by loading a Media Playlist directly
+        var previousDetails = curLevel.details;
+        if (previousDetails === data.details && previousDetails.advanced) {
+          previousDetails = undefined;
+        }
+        this.playlistLoaded(level, data, previousDetails);
       } else if ((_data$deliveryDirecti2 = data.deliveryDirectives) != null && _data$deliveryDirecti2.skip) {
         // received a delta playlist update that cannot be merged
         details.deltaUpdateFailed = true;
@@ -10869,11 +11019,14 @@
      * If not found any Fragment, return null
      */;
     _proto.getBufferedFrag = function getBufferedFrag(position, levelType) {
+      return this.getFragAtPos(position, levelType, true);
+    };
+    _proto.getFragAtPos = function getFragAtPos(position, levelType, buffered) {
       var fragments = this.fragments;
       var keys = Object.keys(fragments);
       for (var i = keys.length; i--;) {
         var fragmentEntity = fragments[keys[i]];
-        if ((fragmentEntity == null ? void 0 : fragmentEntity.body.type) === levelType && fragmentEntity.buffered) {
+        if ((fragmentEntity == null ? void 0 : fragmentEntity.body.type) === levelType && (!buffered || fragmentEntity.buffered)) {
           var frag = fragmentEntity.body;
           if (frag.start <= position && position <= frag.end) {
             return frag;
@@ -11123,10 +11276,10 @@
       };
     };
     _proto.onBufferAppended = function onBufferAppended(event, data) {
-      var _this3 = this;
       var frag = data.frag,
         part = data.part,
-        timeRanges = data.timeRanges;
+        timeRanges = data.timeRanges,
+        type = data.type;
       if (frag.sn === 'initSegment') {
         return;
       }
@@ -11140,10 +11293,8 @@
       }
       // Store the latest timeRanges loaded in the buffer
       this.timeRanges = timeRanges;
-      Object.keys(timeRanges).forEach(function (elementaryStream) {
-        var timeRange = timeRanges[elementaryStream];
-        _this3.detectEvictedFragments(elementaryStream, timeRange, playlistType, part);
-      });
+      var timeRange = timeRanges[type];
+      this.detectEvictedFragments(type, timeRange, playlistType, part);
     };
     _proto.onFragBuffered = function onFragBuffered(event, data) {
       this.detectPartialFragments(data);
@@ -11157,12 +11308,12 @@
       return !!((_this$activePartLists = this.activePartLists[type]) != null && _this$activePartLists.length);
     };
     _proto.removeFragmentsInRange = function removeFragmentsInRange(start, end, playlistType, withGapOnly, unbufferedOnly) {
-      var _this4 = this;
+      var _this3 = this;
       if (withGapOnly && !this.hasGaps) {
         return;
       }
       Object.keys(this.fragments).forEach(function (key) {
-        var fragmentEntity = _this4.fragments[key];
+        var fragmentEntity = _this3.fragments[key];
         if (!fragmentEntity) {
           return;
         }
@@ -11171,7 +11322,7 @@
           return;
         }
         if (frag.start < end && frag.end > start && (fragmentEntity.buffered || unbufferedOnly)) {
-          _this4.removeFragment(frag);
+          _this3.removeFragment(frag);
         }
       });
     };
@@ -12625,6 +12776,8 @@
       _this.startFragRequested = false;
       _this.decrypter = void 0;
       _this.initPTS = [];
+      _this.buffering = true;
+      _this.loadingParts = false;
       _this.onMediaSeeking = function () {
         var _assertThisInitialize = _assertThisInitialized(_this),
           config = _assertThisInitialize.config,
@@ -12660,6 +12813,14 @@
           // Remove gap fragments
           _this.fragmentTracker.removeFragmentsInRange(currentTime, Infinity, _this.playlistType, true);
           _this.lastCurrentTime = currentTime;
+          if (!_this.loadingParts) {
+            var bufferEnd = Math.max(bufferInfo.end, currentTime);
+            var shouldLoadParts = _this.shouldLoadParts(_this.getLevelDetails(), bufferEnd);
+            if (shouldLoadParts) {
+              _this.log("LL-Part loading ON after seeking to " + currentTime.toFixed(2) + " with buffer @" + bufferEnd.toFixed(2));
+              _this.loadingParts = shouldLoadParts;
+            }
+          }
         }
 
         // in case seeking occurs although no media buffered, adjust startPosition and nextLoadPosition to seek target
@@ -12728,6 +12889,12 @@
       this.clearNextTick();
       this.state = State.STOPPED;
     };
+    _proto.pauseBuffering = function pauseBuffering() {
+      this.buffering = false;
+    };
+    _proto.resumeBuffering = function resumeBuffering() {
+      this.buffering = true;
+    };
     _proto._streamEnded = function _streamEnded(bufferInfo, levelDetails) {
       // If playlist is live, there is another buffered range after the current range, nothing buffered, media is detached,
       // of nothing loading/loaded return false
@@ -12792,7 +12959,6 @@
       this.initPTS = [];
     };
     _proto.onHandlerDestroying = function onHandlerDestroying() {
-      this.hls.off(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
       this.stopLoad();
       _TaskLoop.prototype.onHandlerDestroying.call(this);
       // @ts-ignore
@@ -12968,7 +13134,9 @@
         throw new Error('init load aborted, missing levels');
       }
       var stats = data.frag.stats;
-      this.state = State.IDLE;
+      if (this.state !== State.STOPPED) {
+        this.state = State.IDLE;
+      }
       data.frag.data = new Uint8Array(data.payload);
       stats.parsing.start = stats.buffering.start = self.performance.now();
       stats.parsing.end = stats.buffering.end = self.performance.now();
@@ -13063,8 +13231,16 @@
       } else if (!frag.encrypted && details.encryptedFragments.length) {
         this.keyLoader.loadClear(frag, details.encryptedFragments);
       }
+      var fragPrevious = this.fragPrevious;
+      if (frag.sn !== 'initSegment' && (!fragPrevious || frag.sn !== fragPrevious.sn)) {
+        var shouldLoadParts = this.shouldLoadParts(level.details, frag.end);
+        if (shouldLoadParts !== this.loadingParts) {
+          this.log("LL-Part loading " + (shouldLoadParts ? 'ON' : 'OFF') + " loading sn " + (fragPrevious == null ? void 0 : fragPrevious.sn) + "->" + frag.sn);
+          this.loadingParts = shouldLoadParts;
+        }
+      }
       targetBufferTime = Math.max(frag.start, targetBufferTime || 0);
-      if (this.config.lowLatencyMode && frag.sn !== 'initSegment') {
+      if (this.loadingParts && frag.sn !== 'initSegment') {
         var partList = details.partList;
         if (partList && progressCallback) {
           if (targetBufferTime > frag.end && details.fragmentHint) {
@@ -13105,6 +13281,13 @@
             return Promise.resolve(null);
           }
         }
+      }
+      if (frag.sn !== 'initSegment' && this.loadingParts) {
+        this.log("LL-Part loading OFF after next part miss @" + targetBufferTime.toFixed(2));
+        this.loadingParts = false;
+      } else if (!frag.url) {
+        // Selected fragment hint for part but not loading parts
+        return Promise.resolve(null);
       }
       this.log("Loading fragment " + frag.sn + " cc: " + frag.cc + " " + (details ? 'of [' + details.startSN + '-' + details.endSN + '] ' : '') + (this.playlistType === PlaylistLevelType.MAIN ? 'level' : 'track') + ": " + frag.level + ", target: " + parseFloat(targetBufferTime.toFixed(3)));
       // Don't update nextLoadPosition for fragments which are not buffered
@@ -13208,7 +13391,35 @@
       if (part) {
         part.stats.parsing.end = now;
       }
+      // See if part loading should be disabled/enabled based on buffer and playback position.
+      if (frag.sn !== 'initSegment') {
+        var levelDetails = this.getLevelDetails();
+        var loadingPartsAtEdge = levelDetails && frag.sn > levelDetails.endSN;
+        var shouldLoadParts = loadingPartsAtEdge || this.shouldLoadParts(levelDetails, frag.end);
+        if (shouldLoadParts !== this.loadingParts) {
+          this.log("LL-Part loading " + (shouldLoadParts ? 'ON' : 'OFF') + " after parsing segment ending @" + frag.end.toFixed(2));
+          this.loadingParts = shouldLoadParts;
+        }
+      }
       this.updateLevelTiming(frag, part, level, chunkMeta.partial);
+    };
+    _proto.shouldLoadParts = function shouldLoadParts(details, bufferEnd) {
+      if (this.config.lowLatencyMode) {
+        if (!details) {
+          return this.loadingParts;
+        }
+        if (details != null && details.partList) {
+          var _details$fragmentHint;
+          // Buffer must be ahead of first part + duration of parts after last segment
+          // and playback must be at or past segment adjacent to part list
+          var firstPart = details.partList[0];
+          var safePartStart = firstPart.end + (((_details$fragmentHint = details.fragmentHint) == null ? void 0 : _details$fragmentHint.duration) || 0);
+          if (bufferEnd >= safePartStart && this.lastCurrentTime > firstPart.start - firstPart.fragment.duration) {
+            return true;
+          }
+        }
+      }
+      return false;
     };
     _proto.getCurrentContext = function getCurrentContext(chunkMeta) {
       var levels = this.levels,
@@ -13300,7 +13511,7 @@
       // Workaround flaw in getting forward buffer when maxBufferHole is smaller than gap at current pos
       if (bufferInfo.len === 0 && bufferInfo.nextStart !== undefined) {
         var bufferedFragAtPos = this.fragmentTracker.getBufferedFrag(pos, type);
-        if (bufferedFragAtPos && bufferInfo.nextStart < bufferedFragAtPos.end) {
+        if (bufferedFragAtPos && (bufferInfo.nextStart <= bufferedFragAtPos.end || bufferedFragAtPos.gap)) {
           return BufferHelper.bufferInfo(bufferable, pos, Math.max(bufferInfo.nextStart, maxBufferHole));
         }
       }
@@ -13344,7 +13555,8 @@
       // find fragment index, contiguous with end of buffer position
       var config = this.config;
       var start = fragments[0].start;
-      var frag;
+      var canLoadParts = config.lowLatencyMode && !!levelDetails.partList;
+      var frag = null;
       if (levelDetails.live) {
         var initialLiveManifestSize = config.initialLiveManifestSize;
         if (fragLen < initialLiveManifestSize) {
@@ -13356,6 +13568,10 @@
         // Do not load using live logic if the starting frag is requested - we want to use getFragmentAtPosition() so that
         // we get the fragment matching that start time
         if (!levelDetails.PTSKnown && !this.startFragRequested && this.startPosition === -1 || pos < start) {
+          if (canLoadParts && !this.loadingParts) {
+            this.log("LL-Part loading ON for initial live fragment");
+            this.loadingParts = true;
+          }
           frag = this.getInitialLiveFragment(levelDetails, fragments);
           this.startPosition = this.nextLoadPosition = frag ? this.hls.liveSyncPosition || frag.start : pos;
         }
@@ -13366,7 +13582,7 @@
 
       // If we haven't run into any special cases already, just load the fragment most closely matching the requested position
       if (!frag) {
-        var end = config.lowLatencyMode ? levelDetails.partEnd : levelDetails.fragmentEnd;
+        var end = this.loadingParts ? levelDetails.partEnd : levelDetails.fragmentEnd;
         frag = this.getFragmentAtPosition(pos, end, levelDetails);
       }
       return this.mapToInitFragWhenRequired(frag);
@@ -13480,7 +13696,7 @@
       var fragmentHint = levelDetails.fragmentHint;
       var tolerance = config.maxFragLookUpTolerance;
       var partList = levelDetails.partList;
-      var loadingParts = !!(config.lowLatencyMode && partList != null && partList.length && fragmentHint);
+      var loadingParts = !!(this.loadingParts && partList != null && partList.length && fragmentHint);
       if (loadingParts && fragmentHint && !this.bitrateTest) {
         // Include incomplete fragment with parts at end
         fragments = fragments.concat(fragmentHint);
@@ -13735,7 +13951,9 @@
       this.log('Reset loading state');
       this.fragCurrent = null;
       this.fragPrevious = null;
-      this.state = State.IDLE;
+      if (this.state !== State.STOPPED) {
+        this.state = State.IDLE;
+      }
     };
     _proto.resetStartWhenNotLoaded = function resetStartWhenNotLoaded(level) {
       // if loadedmetadata is not set, it means that first frag request failed
@@ -15306,608 +15524,6 @@
       };
     };
     return AvcVideoParser;
-  }(BaseVideoParser);
-
-  var HevcVideoParser = /*#__PURE__*/function (_BaseVideoParser) {
-    _inheritsLoose(HevcVideoParser, _BaseVideoParser);
-    function HevcVideoParser() {
-      var _this;
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-      _this = _BaseVideoParser.call.apply(_BaseVideoParser, [this].concat(args)) || this;
-      _this.initVPS = null;
-      return _this;
-    }
-    var _proto = HevcVideoParser.prototype;
-    _proto.parsePES = function parsePES(track, textTrack, pes, last, duration) {
-      var _this2 = this;
-      var units = this.parseNALu(track, pes.data);
-      var VideoSample = this.VideoSample;
-      var push;
-      var spsfound = false;
-      // free pes.data to save up some memory
-      pes.data = null;
-
-      // if new NAL units found and last sample still there, let's push ...
-      // this helps parsing streams with missing AUD (only do this if AUD never found)
-      if (VideoSample && units.length && !track.audFound) {
-        this.pushAccessUnit(VideoSample, track);
-        VideoSample = this.VideoSample = this.createVideoSample(false, pes.pts, pes.dts, '');
-      }
-      units.forEach(function (unit) {
-        var _VideoSample2;
-        switch (unit.type) {
-          // NON-IDR, NON RANDOM ACCESS SLICE
-          case 0:
-          case 1:
-          case 2:
-          case 3:
-          case 4:
-          case 5:
-          case 6:
-          case 7:
-          case 8:
-          case 9:
-            if (!VideoSample) {
-              VideoSample = _this2.VideoSample = _this2.createVideoSample(false, pes.pts, pes.dts, '');
-            }
-            VideoSample.frame = true;
-            push = true;
-            break;
-
-          // CRA, BLA (random access picture)
-          case 16:
-          case 17:
-          case 18:
-          case 21:
-            push = true;
-            if (spsfound) {
-              var _VideoSample;
-              // handle PES not starting with AUD
-              // if we have frame data already, that cannot belong to the same frame, so force a push
-              if ((_VideoSample = VideoSample) != null && _VideoSample.frame && !VideoSample.key) {
-                _this2.pushAccessUnit(VideoSample, track);
-                VideoSample = _this2.VideoSample = null;
-              }
-            }
-            if (!VideoSample) {
-              VideoSample = _this2.VideoSample = _this2.createVideoSample(true, pes.pts, pes.dts, '');
-            }
-            VideoSample.key = true;
-            VideoSample.frame = true;
-            break;
-
-          // IDR
-          case 19:
-          case 20:
-            push = true;
-            // handle PES not starting with AUD
-            // if we have frame data already, that cannot belong to the same frame, so force a push
-            if ((_VideoSample2 = VideoSample) != null && _VideoSample2.frame && !VideoSample.key) {
-              _this2.pushAccessUnit(VideoSample, track);
-              VideoSample = _this2.VideoSample = null;
-            }
-            if (!VideoSample) {
-              VideoSample = _this2.VideoSample = _this2.createVideoSample(true, pes.pts, pes.dts, '');
-            }
-            VideoSample.key = true;
-            VideoSample.frame = true;
-            break;
-
-          // SEI
-          case 39:
-            push = true;
-            parseSEIMessageFromNALu(unit.data, 2,
-            // NALu header size
-            pes.pts, textTrack.samples);
-            break;
-
-          // VPS
-          case 32:
-            push = true;
-            if (!track.vps) {
-              var config = _this2.readVPS(unit.data);
-              track.params = _objectSpread2({}, config);
-              _this2.initVPS = unit.data;
-            }
-            track.vps = [unit.data];
-            break;
-
-          // SPS
-          case 33:
-            push = true;
-            spsfound = true;
-            if (typeof track.params === 'object') {
-              if (track.vps !== undefined && track.vps[0] !== _this2.initVPS && track.sps !== undefined && !_this2.matchSPS(track.sps[0], unit.data)) {
-                _this2.initVPS = track.vps[0];
-                track.sps = track.pps = undefined;
-              }
-              if (!track.sps) {
-                var _config = _this2.readSPS(unit.data);
-                track.width = _config.width;
-                track.height = _config.height;
-                track.pixelRatio = _config.pixelRatio;
-                track.duration = duration;
-                track.codec = _config.codecString;
-                track.sps = [];
-                for (var prop in _config.params) {
-                  track.params[prop] = _config.params[prop];
-                }
-              }
-              if (track.vps !== undefined && track.vps[0] === _this2.initVPS) {
-                track.sps.push(unit.data);
-              }
-            }
-            if (!VideoSample) {
-              VideoSample = _this2.VideoSample = _this2.createVideoSample(true, pes.pts, pes.dts, '');
-            }
-            VideoSample.key = true;
-            break;
-
-          // PPS
-          case 34:
-            push = true;
-            if (typeof track.params === 'object') {
-              if (!track.pps) {
-                track.pps = [];
-                var _config2 = _this2.readPPS(unit.data);
-                for (var _prop in _config2) {
-                  track.params[_prop] = _config2[_prop];
-                }
-              }
-              if (_this2.initVPS !== null || track.pps.length === 0) {
-                track.pps.push(unit.data);
-              }
-            }
-            break;
-
-          // ACCESS UNIT DELIMITER
-          case 35:
-            push = true;
-            track.audFound = true;
-            if (VideoSample) {
-              _this2.pushAccessUnit(VideoSample, track);
-            }
-            VideoSample = _this2.VideoSample = _this2.createVideoSample(false, pes.pts, pes.dts, '');
-            break;
-          default:
-            push = false;
-            if (VideoSample) {
-              VideoSample.debug += 'unknown or irrelevant NAL ' + unit.type + ' ';
-            }
-            break;
-        }
-        if (VideoSample && push) {
-          var _units = VideoSample.units;
-          _units.push(unit);
-        }
-      });
-      // if last PES packet, push samples
-      if (last && VideoSample) {
-        this.pushAccessUnit(VideoSample, track);
-        this.VideoSample = null;
-      }
-    };
-    _proto.getNALuType = function getNALuType(data, offset) {
-      return (data[offset] & 0x7e) >>> 1;
-    };
-    _proto.ebsp2rbsp = function ebsp2rbsp(arr) {
-      var dst = new Uint8Array(arr.byteLength);
-      var dstIdx = 0;
-      for (var i = 0; i < arr.byteLength; i++) {
-        if (i >= 2) {
-          // Unescape: Skip 0x03 after 00 00
-          if (arr[i] === 0x03 && arr[i - 1] === 0x00 && arr[i - 2] === 0x00) {
-            continue;
-          }
-        }
-        dst[dstIdx] = arr[i];
-        dstIdx++;
-      }
-      return new Uint8Array(dst.buffer, 0, dstIdx);
-    };
-    _proto.readVPS = function readVPS(vps) {
-      var eg = new ExpGolomb(vps);
-      // remove header
-      eg.readUByte();
-      eg.readUByte();
-      eg.readBits(4); // video_parameter_set_id
-      eg.skipBits(2);
-      eg.readBits(6); // max_layers_minus1
-      var max_sub_layers_minus1 = eg.readBits(3);
-      var temporal_id_nesting_flag = eg.readBoolean();
-      // ...vui fps can be here, but empty fps value is not critical for metadata
-
-      return {
-        numTemporalLayers: max_sub_layers_minus1 + 1,
-        temporalIdNested: temporal_id_nesting_flag
-      };
-    };
-    _proto.readSPS = function readSPS(sps) {
-      var eg = new ExpGolomb(this.ebsp2rbsp(sps));
-      eg.readUByte();
-      eg.readUByte();
-      eg.readBits(4); //video_parameter_set_id
-      var max_sub_layers_minus1 = eg.readBits(3);
-      eg.readBoolean(); // temporal_id_nesting_flag
-
-      // profile_tier_level
-      var general_profile_space = eg.readBits(2);
-      var general_tier_flag = eg.readBoolean();
-      var general_profile_idc = eg.readBits(5);
-      var general_profile_compatibility_flags_1 = eg.readUByte();
-      var general_profile_compatibility_flags_2 = eg.readUByte();
-      var general_profile_compatibility_flags_3 = eg.readUByte();
-      var general_profile_compatibility_flags_4 = eg.readUByte();
-      var general_constraint_indicator_flags_1 = eg.readUByte();
-      var general_constraint_indicator_flags_2 = eg.readUByte();
-      var general_constraint_indicator_flags_3 = eg.readUByte();
-      var general_constraint_indicator_flags_4 = eg.readUByte();
-      var general_constraint_indicator_flags_5 = eg.readUByte();
-      var general_constraint_indicator_flags_6 = eg.readUByte();
-      var general_level_idc = eg.readUByte();
-      var sub_layer_profile_present_flags = [];
-      var sub_layer_level_present_flags = [];
-      for (var i = 0; i < max_sub_layers_minus1; i++) {
-        sub_layer_profile_present_flags.push(eg.readBoolean());
-        sub_layer_level_present_flags.push(eg.readBoolean());
-      }
-      if (max_sub_layers_minus1 > 0) {
-        for (var _i = max_sub_layers_minus1; _i < 8; _i++) {
-          eg.readBits(2);
-        }
-      }
-      for (var _i2 = 0; _i2 < max_sub_layers_minus1; _i2++) {
-        if (sub_layer_profile_present_flags[_i2]) {
-          eg.readUByte(); // sub_layer_profile_space, sub_layer_tier_flag, sub_layer_profile_idc
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte(); // sub_layer_profile_compatibility_flag
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-        }
-        if (sub_layer_level_present_flags[_i2]) {
-          eg.readUByte();
-        }
-      }
-      eg.readUEG(); // seq_parameter_set_id
-      var chroma_format_idc = eg.readUEG();
-      if (chroma_format_idc == 3) {
-        eg.skipBits(1); //separate_colour_plane_flag
-      }
-      var pic_width_in_luma_samples = eg.readUEG();
-      var pic_height_in_luma_samples = eg.readUEG();
-      var conformance_window_flag = eg.readBoolean();
-      var pic_left_offset = 0,
-        pic_right_offset = 0,
-        pic_top_offset = 0,
-        pic_bottom_offset = 0;
-      if (conformance_window_flag) {
-        pic_left_offset += eg.readUEG();
-        pic_right_offset += eg.readUEG();
-        pic_top_offset += eg.readUEG();
-        pic_bottom_offset += eg.readUEG();
-      }
-      var bit_depth_luma_minus8 = eg.readUEG();
-      var bit_depth_chroma_minus8 = eg.readUEG();
-      var log2_max_pic_order_cnt_lsb_minus4 = eg.readUEG();
-      var sub_layer_ordering_info_present_flag = eg.readBoolean();
-      for (var _i3 = sub_layer_ordering_info_present_flag ? 0 : max_sub_layers_minus1; _i3 <= max_sub_layers_minus1; _i3++) {
-        eg.skipUEG(); // max_dec_pic_buffering_minus1[i]
-        eg.skipUEG(); // max_num_reorder_pics[i]
-        eg.skipUEG(); // max_latency_increase_plus1[i]
-      }
-      eg.skipUEG(); // log2_min_luma_coding_block_size_minus3
-      eg.skipUEG(); // log2_diff_max_min_luma_coding_block_size
-      eg.skipUEG(); // log2_min_transform_block_size_minus2
-      eg.skipUEG(); // log2_diff_max_min_transform_block_size
-      eg.skipUEG(); // max_transform_hierarchy_depth_inter
-      eg.skipUEG(); // max_transform_hierarchy_depth_intra
-      var scaling_list_enabled_flag = eg.readBoolean();
-      if (scaling_list_enabled_flag) {
-        var sps_scaling_list_data_present_flag = eg.readBoolean();
-        if (sps_scaling_list_data_present_flag) {
-          for (var sizeId = 0; sizeId < 4; sizeId++) {
-            for (var matrixId = 0; matrixId < (sizeId === 3 ? 2 : 6); matrixId++) {
-              var scaling_list_pred_mode_flag = eg.readBoolean();
-              if (!scaling_list_pred_mode_flag) {
-                eg.readUEG(); // scaling_list_pred_matrix_id_delta
-              } else {
-                var coefNum = Math.min(64, 1 << 4 + (sizeId << 1));
-                if (sizeId > 1) {
-                  eg.readEG();
-                }
-                for (var _i4 = 0; _i4 < coefNum; _i4++) {
-                  eg.readEG();
-                }
-              }
-            }
-          }
-        }
-      }
-      eg.readBoolean(); // amp_enabled_flag
-      eg.readBoolean(); // sample_adaptive_offset_enabled_flag
-      var pcm_enabled_flag = eg.readBoolean();
-      if (pcm_enabled_flag) {
-        eg.readUByte();
-        eg.skipUEG();
-        eg.skipUEG();
-        eg.readBoolean();
-      }
-      var num_short_term_ref_pic_sets = eg.readUEG();
-      var num_delta_pocs = 0;
-      for (var _i5 = 0; _i5 < num_short_term_ref_pic_sets; _i5++) {
-        var inter_ref_pic_set_prediction_flag = false;
-        if (_i5 !== 0) {
-          inter_ref_pic_set_prediction_flag = eg.readBoolean();
-        }
-        if (inter_ref_pic_set_prediction_flag) {
-          if (_i5 === num_short_term_ref_pic_sets) {
-            eg.readUEG();
-          }
-          eg.readBoolean();
-          eg.readUEG();
-          var next_num_delta_pocs = 0;
-          for (var j = 0; j <= num_delta_pocs; j++) {
-            var used_by_curr_pic_flag = eg.readBoolean();
-            var use_delta_flag = false;
-            if (!used_by_curr_pic_flag) {
-              use_delta_flag = eg.readBoolean();
-            }
-            if (used_by_curr_pic_flag || use_delta_flag) {
-              next_num_delta_pocs++;
-            }
-          }
-          num_delta_pocs = next_num_delta_pocs;
-        } else {
-          var num_negative_pics = eg.readUEG();
-          var num_positive_pics = eg.readUEG();
-          num_delta_pocs = num_negative_pics + num_positive_pics;
-          for (var _j = 0; _j < num_negative_pics; _j++) {
-            eg.readUEG();
-            eg.readBoolean();
-          }
-          for (var _j2 = 0; _j2 < num_positive_pics; _j2++) {
-            eg.readUEG();
-            eg.readBoolean();
-          }
-        }
-      }
-      var long_term_ref_pics_present_flag = eg.readBoolean();
-      if (long_term_ref_pics_present_flag) {
-        var num_long_term_ref_pics_sps = eg.readUEG();
-        for (var _i6 = 0; _i6 < num_long_term_ref_pics_sps; _i6++) {
-          for (var _j3 = 0; _j3 < log2_max_pic_order_cnt_lsb_minus4 + 4; _j3++) {
-            eg.readBits(1);
-          }
-          eg.readBits(1);
-        }
-      }
-      var min_spatial_segmentation_idc = 0;
-      var sar_width = 1,
-        sar_height = 1;
-      var fps_fixed = true,
-        fps_den = 1,
-        fps_num = 0;
-      eg.readBoolean(); // sps_temporal_mvp_enabled_flag
-      eg.readBoolean(); // strong_intra_smoothing_enabled_flag
-      var default_display_window_flag = false;
-      var vui_parameters_present_flag = eg.readBoolean();
-      if (vui_parameters_present_flag) {
-        var aspect_ratio_info_present_flag = eg.readBoolean();
-        if (aspect_ratio_info_present_flag) {
-          var aspect_ratio_idc = eg.readUByte();
-          var sar_width_table = [1, 12, 10, 16, 40, 24, 20, 32, 80, 18, 15, 64, 160, 4, 3, 2];
-          var sar_height_table = [1, 11, 11, 11, 33, 11, 11, 11, 33, 11, 11, 33, 99, 3, 2, 1];
-          if (aspect_ratio_idc > 0 && aspect_ratio_idc < 16) {
-            sar_width = sar_width_table[aspect_ratio_idc - 1];
-            sar_height = sar_height_table[aspect_ratio_idc - 1];
-          } else if (aspect_ratio_idc === 255) {
-            sar_width = eg.readBits(16);
-            sar_height = eg.readBits(16);
-          }
-        }
-        var overscan_info_present_flag = eg.readBoolean();
-        if (overscan_info_present_flag) {
-          eg.readBoolean();
-        }
-        var video_signal_type_present_flag = eg.readBoolean();
-        if (video_signal_type_present_flag) {
-          eg.readBits(3);
-          eg.readBoolean();
-          var colour_description_present_flag = eg.readBoolean();
-          if (colour_description_present_flag) {
-            eg.readUByte();
-            eg.readUByte();
-            eg.readUByte();
-          }
-        }
-        var chroma_loc_info_present_flag = eg.readBoolean();
-        if (chroma_loc_info_present_flag) {
-          eg.readUEG();
-          eg.readUEG();
-        }
-        eg.readBoolean(); // neutral_chroma_indication_flag
-        eg.readBoolean(); // field_seq_flag
-        eg.readBoolean(); // frame_field_info_present_flag
-        default_display_window_flag = eg.readBoolean();
-        if (default_display_window_flag) {
-          pic_left_offset += eg.readUEG();
-          pic_right_offset += eg.readUEG();
-          pic_top_offset += eg.readUEG();
-          pic_bottom_offset += eg.readUEG();
-        }
-        var vui_timing_info_present_flag = eg.readBoolean();
-        if (vui_timing_info_present_flag) {
-          fps_den = eg.readBits(32);
-          fps_num = eg.readBits(32);
-          var vui_poc_proportional_to_timing_flag = eg.readBoolean();
-          if (vui_poc_proportional_to_timing_flag) {
-            eg.readUEG();
-          }
-          var vui_hrd_parameters_present_flag = eg.readBoolean();
-          if (vui_hrd_parameters_present_flag) {
-            //const commonInfPresentFlag = true;
-            //if (commonInfPresentFlag) {
-            var nal_hrd_parameters_present_flag = eg.readBoolean();
-            var vcl_hrd_parameters_present_flag = eg.readBoolean();
-            var sub_pic_hrd_params_present_flag = false;
-            if (nal_hrd_parameters_present_flag || vcl_hrd_parameters_present_flag) {
-              sub_pic_hrd_params_present_flag = eg.readBoolean();
-              if (sub_pic_hrd_params_present_flag) {
-                eg.readUByte();
-                eg.readBits(5);
-                eg.readBoolean();
-                eg.readBits(5);
-              }
-              eg.readBits(4); // bit_rate_scale
-              eg.readBits(4); // cpb_size_scale
-              if (sub_pic_hrd_params_present_flag) {
-                eg.readBits(4);
-              }
-              eg.readBits(5);
-              eg.readBits(5);
-              eg.readBits(5);
-            }
-            //}
-            for (var _i7 = 0; _i7 <= max_sub_layers_minus1; _i7++) {
-              fps_fixed = eg.readBoolean(); // fixed_pic_rate_general_flag
-              var fixed_pic_rate_within_cvs_flag = fps_fixed || eg.readBoolean();
-              var low_delay_hrd_flag = false;
-              if (fixed_pic_rate_within_cvs_flag) {
-                eg.readEG();
-              } else {
-                low_delay_hrd_flag = eg.readBoolean();
-              }
-              var cpb_cnt = low_delay_hrd_flag ? 1 : eg.readUEG() + 1;
-              if (nal_hrd_parameters_present_flag) {
-                for (var _j4 = 0; _j4 < cpb_cnt; _j4++) {
-                  eg.readUEG();
-                  eg.readUEG();
-                  if (sub_pic_hrd_params_present_flag) {
-                    eg.readUEG();
-                    eg.readUEG();
-                  }
-                  eg.skipBits(1);
-                }
-              }
-              if (vcl_hrd_parameters_present_flag) {
-                for (var _j5 = 0; _j5 < cpb_cnt; _j5++) {
-                  eg.readUEG();
-                  eg.readUEG();
-                  if (sub_pic_hrd_params_present_flag) {
-                    eg.readUEG();
-                    eg.readUEG();
-                  }
-                  eg.skipBits(1);
-                }
-              }
-            }
-          }
-        }
-        var bitstream_restriction_flag = eg.readBoolean();
-        if (bitstream_restriction_flag) {
-          eg.readBoolean(); // tiles_fixed_structure_flag
-          eg.readBoolean(); // motion_vectors_over_pic_boundaries_flag
-          eg.readBoolean(); // restricted_ref_pic_lists_flag
-          min_spatial_segmentation_idc = eg.readUEG();
-        }
-      }
-      var width = pic_width_in_luma_samples,
-        height = pic_height_in_luma_samples;
-      if (conformance_window_flag || default_display_window_flag) {
-        var chroma_scale_w = 1,
-          chroma_scale_h = 1;
-        if (chroma_format_idc === 1) {
-          // YUV 420
-          chroma_scale_w = chroma_scale_h = 2;
-        } else if (chroma_format_idc == 2) {
-          // YUV 422
-          chroma_scale_w = 2;
-        }
-        width = pic_width_in_luma_samples - chroma_scale_w * pic_right_offset - chroma_scale_w * pic_left_offset;
-        height = pic_height_in_luma_samples - chroma_scale_h * pic_bottom_offset - chroma_scale_h * pic_top_offset;
-      }
-      var profile_space_string = general_profile_space ? ['A', 'B', 'C'][general_profile_space] : '';
-      var profile_compatibility_buf = general_profile_compatibility_flags_1 << 24 | general_profile_compatibility_flags_2 << 16 | general_profile_compatibility_flags_3 << 8 | general_profile_compatibility_flags_4;
-      var profile_compatibility_rev = 0;
-      for (var _i8 = 0; _i8 < 32; _i8++) {
-        profile_compatibility_rev = (profile_compatibility_rev | (profile_compatibility_buf >> _i8 & 1) << 31 - _i8) >>> 0; // reverse bit position (and cast as UInt32)
-      }
-      var profile_compatibility_flags_string = profile_compatibility_rev.toString(16);
-      if (general_profile_idc === 1 && profile_compatibility_flags_string === '2') {
-        profile_compatibility_flags_string = '6';
-      }
-      var tier_flag_string = general_tier_flag ? 'H' : 'L';
-      return {
-        codecString: "hvc1." + profile_space_string + general_profile_idc + "." + profile_compatibility_flags_string + "." + tier_flag_string + general_level_idc + ".B0",
-        params: {
-          general_tier_flag: general_tier_flag,
-          general_profile_idc: general_profile_idc,
-          general_profile_space: general_profile_space,
-          general_profile_compatibility_flags: [general_profile_compatibility_flags_1, general_profile_compatibility_flags_2, general_profile_compatibility_flags_3, general_profile_compatibility_flags_4],
-          general_constraint_indicator_flags: [general_constraint_indicator_flags_1, general_constraint_indicator_flags_2, general_constraint_indicator_flags_3, general_constraint_indicator_flags_4, general_constraint_indicator_flags_5, general_constraint_indicator_flags_6],
-          general_level_idc: general_level_idc,
-          bit_depth: bit_depth_luma_minus8 + 8,
-          bit_depth_luma_minus8: bit_depth_luma_minus8,
-          bit_depth_chroma_minus8: bit_depth_chroma_minus8,
-          min_spatial_segmentation_idc: min_spatial_segmentation_idc,
-          chroma_format_idc: chroma_format_idc,
-          frame_rate: {
-            fixed: fps_fixed,
-            fps: fps_num / fps_den
-          }
-        },
-        width: width,
-        height: height,
-        pixelRatio: [sar_width, sar_height]
-      };
-    };
-    _proto.readPPS = function readPPS(pps) {
-      var eg = new ExpGolomb(this.ebsp2rbsp(pps));
-      eg.readUByte();
-      eg.readUByte();
-      eg.skipUEG(); // pic_parameter_set_id
-      eg.skipUEG(); // seq_parameter_set_id
-      eg.skipBits(2); // dependent_slice_segments_enabled_flag, output_flag_present_flag
-      eg.skipBits(3); // num_extra_slice_header_bits
-      eg.skipBits(2); // sign_data_hiding_enabled_flag, cabac_init_present_flag
-      eg.skipUEG();
-      eg.skipUEG();
-      eg.skipEG(); // init_qp_minus26
-      eg.skipBits(2); // constrained_intra_pred_flag, transform_skip_enabled_flag
-      var cu_qp_delta_enabled_flag = eg.readBoolean();
-      if (cu_qp_delta_enabled_flag) {
-        eg.skipUEG();
-      }
-      eg.skipEG(); // cb_qp_offset
-      eg.skipEG(); // cr_qp_offset
-      eg.skipBits(4); // pps_slice_chroma_qp_offsets_present_flag, weighted_pred_flag, weighted_bipred_flag, transquant_bypass_enabled_flag
-      var tiles_enabled_flag = eg.readBoolean();
-      var entropy_coding_sync_enabled_flag = eg.readBoolean();
-      var parallelismType = 1; // slice-based parallel decoding
-      if (entropy_coding_sync_enabled_flag && tiles_enabled_flag) {
-        parallelismType = 0; // mixed-type parallel decoding
-      } else if (entropy_coding_sync_enabled_flag) {
-        parallelismType = 3; // wavefront-based parallel decoding
-      } else if (tiles_enabled_flag) {
-        parallelismType = 2; // tile-based parallel decoding
-      }
-      return {
-        parallelismType: parallelismType
-      };
-    };
-    _proto.matchSPS = function matchSPS(sps1, sps2) {
-      // compare without headers and VPS related params
-      return String.fromCharCode.apply(null, sps1).substr(3) === String.fromCharCode.apply(null, sps2).substr(3);
-    };
-    return HevcVideoParser;
   }(BaseVideoParser);
 
   /**
@@ -20306,7 +19922,8 @@
           }
           // set new level to playlist loader : this will trigger start level load
           // hls.nextLoadLevel remains until it is set to a new value or until a new frag is successfully loaded
-          this.level = hls.nextLoadLevel = startLevel;
+          hls.nextLoadLevel = startLevel;
+          this.level = hls.loadLevel;
           this.loadedmetadata = false;
         }
         // if startPosition undefined but lastCurrentTime set, set startPosition to last currentTime
@@ -20373,17 +19990,18 @@
       this.checkFragmentChanged();
     };
     _proto.doTickIdle = function doTickIdle() {
+      if (!this.buffering) {
+        return;
+      }
       var hls = this.hls,
         levelLastLoaded = this.levelLastLoaded,
         levels = this.levels,
         media = this.media;
-      var config = hls.config,
-        level = hls.nextLoadLevel;
 
       // if start level not parsed yet OR
       // if video not attached AND start fragment already requested OR start frag prefetch not enabled
       // exit loop, as we either need more info (level not parsed) or we need media to be attached to load new fragment
-      if (levelLastLoaded === null || !media && (this.startFragRequested || !config.startFragPrefetch)) {
+      if (levelLastLoaded === null || !media && (this.startFragRequested || !hls.config.startFragPrefetch)) {
         return;
       }
 
@@ -20391,6 +20009,7 @@
       if (this.altAudio && this.audioOnly) {
         return;
       }
+      var level = hls.nextLoadLevel;
       if (!(levels != null && levels[level])) {
         return;
       }
@@ -20606,8 +20225,8 @@
       if (media) {
         media.removeEventListener('playing', this.onMediaPlaying);
         media.removeEventListener('seeked', this.onMediaSeeked);
-        this.videoBuffer = null;
       }
+      this.videoBuffer = null;
       this.fragPlaying = null;
       if (this.gapController) {
         this.gapController.destroy();
@@ -21264,6 +20883,17 @@
       }
     };
     _createClass(StreamController, [{
+      key: "maxBufferLength",
+      get: function get() {
+        var levels = this.levels,
+          level = this.level;
+        var levelInfo = levels == null ? void 0 : levels[level];
+        if (!levelInfo) {
+          return this.config.maxBufferLength;
+        }
+        return this.getMaxBufferLength(levelInfo.maxBitrate);
+      }
+    }, {
       key: "nextLevel",
       get: function get() {
         var frag = this.nextBufferedFrag;
@@ -21369,7 +20999,6 @@
       this.logger = void 0;
       this.coreComponents = void 0;
       this.networkControllers = void 0;
-      this.started = false;
       this._emitter = new EventEmitter();
       this._autoLevelCapping = -1;
       this._maxHdcpLevel = null;
@@ -21401,7 +21030,9 @@
         ConfigFpsController = config.fpsController;
       var errorController = new ConfigErrorController(this);
       var abrController = this.abrController = new ConfigAbrController(this);
-      var bufferController = this.bufferController = new ConfigBufferController(this);
+      // FragmentTracker must be defined before StreamController because the order of event handling is important
+      var fragmentTracker = new FragmentTracker(this);
+      var bufferController = this.bufferController = new ConfigBufferController(this, fragmentTracker);
       var capLevelController = this.capLevelController = new ConfigCapLevelController(this);
       var fpsController = new ConfigFpsController(this);
       var playListLoader = new PlaylistLoader(this);
@@ -21410,8 +21041,6 @@
       // ConentSteeringController is defined before LevelController to receive Multivariant Playlist events first
       var contentSteering = ConfigContentSteeringController ? new ConfigContentSteeringController(this) : null;
       var levelController = this.levelController = new LevelController(this, contentSteering);
-      // FragmentTracker must be defined before StreamController because the order of event handling is important
-      var fragmentTracker = new FragmentTracker(this);
       var keyLoader = new KeyLoader(this.config);
       var streamController = this.streamController = new StreamController(this, fragmentTracker, keyLoader);
 
@@ -21637,7 +21266,6 @@
         startPosition = -1;
       }
       this.logger.log("startLoad(" + startPosition + ")");
-      this.started = true;
       this.networkControllers.forEach(function (controller) {
         controller.startLoad(startPosition);
       });
@@ -21648,33 +21276,30 @@
      */;
     _proto.stopLoad = function stopLoad() {
       this.logger.log('stopLoad');
-      this.started = false;
       this.networkControllers.forEach(function (controller) {
         controller.stopLoad();
       });
     }
 
     /**
-     * Resumes stream controller segment loading if previously started.
+     * Resumes stream controller segment loading after `pauseBuffering` has been called.
      */;
     _proto.resumeBuffering = function resumeBuffering() {
-      if (this.started) {
-        this.networkControllers.forEach(function (controller) {
-          if ('fragmentLoader' in controller) {
-            controller.startLoad(-1);
-          }
-        });
-      }
+      this.networkControllers.forEach(function (controller) {
+        if (controller.resumeBuffering) {
+          controller.resumeBuffering();
+        }
+      });
     }
 
     /**
-     * Stops stream controller segment loading without changing 'started' state like stopLoad().
+     * Prevents stream controller from loading new segments until `resumeBuffering` is called.
      * This allows for media buffering to be paused without interupting playlist loading.
      */;
     _proto.pauseBuffering = function pauseBuffering() {
       this.networkControllers.forEach(function (controller) {
-        if ('fragmentLoader' in controller) {
-          controller.stopLoad();
+        if (controller.pauseBuffering) {
+          controller.pauseBuffering();
         }
       });
     }
@@ -22048,6 +21673,11 @@
       key: "mainForwardBufferInfo",
       get: function get() {
         return this.streamController.getMainFwdBufferInfo();
+      }
+    }, {
+      key: "maxBufferLength",
+      get: function get() {
+        return this.streamController.maxBufferLength;
       }
     }, {
       key: "allAudioTracks",

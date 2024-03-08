@@ -370,78 +370,6 @@ let ErrorDetails = /*#__PURE__*/function (ErrorDetails) {
   return ErrorDetails;
 }({});
 
-class Logger {
-  constructor(label, logger) {
-    this.trace = void 0;
-    this.debug = void 0;
-    this.log = void 0;
-    this.warn = void 0;
-    this.info = void 0;
-    this.error = void 0;
-    const lb = `[${label}]:`;
-    this.trace = noop;
-    this.debug = logger.debug.bind(null, lb);
-    this.log = logger.log.bind(null, lb);
-    this.warn = logger.warn.bind(null, lb);
-    this.info = logger.info.bind(null, lb);
-    this.error = logger.error.bind(null, lb);
-  }
-}
-const noop = function noop() {};
-const fakeLogger = {
-  trace: noop,
-  debug: noop,
-  log: noop,
-  warn: noop,
-  info: noop,
-  error: noop
-};
-function createLogger() {
-  return _extends({}, fakeLogger);
-}
-
-// let lastCallTime;
-// function formatMsgWithTimeInfo(type, msg) {
-//   const now = Date.now();
-//   const diff = lastCallTime ? '+' + (now - lastCallTime) : '0';
-//   lastCallTime = now;
-//   msg = (new Date(now)).toISOString() + ' | [' +  type + '] > ' + msg + ' ( ' + diff + ' ms )';
-//   return msg;
-// }
-
-function consolePrintFn(type, id) {
-  const func = self.console[type];
-  return func ? func.bind(self.console, `${id ? '[' + id + '] ' : ''}[${type}] >`) : noop;
-}
-function getLoggerFn(key, debugConfig, id) {
-  return debugConfig[key] ? debugConfig[key].bind(debugConfig) : consolePrintFn(key, id);
-}
-let exportedLogger = createLogger();
-function enableLogs(debugConfig, context, id) {
-  // check that console is available
-  const newLogger = createLogger();
-  if (typeof console === 'object' && debugConfig === true || typeof debugConfig === 'object') {
-    const keys = [
-    // Remove out from list here to hard-disable a log-level
-    // 'trace',
-    'debug', 'log', 'info', 'warn', 'error'];
-    keys.forEach(key => {
-      newLogger[key] = getLoggerFn(key, debugConfig, id);
-    });
-    // Some browsers don't allow to use bind on console object anyway
-    // fallback to default if needed
-    try {
-      newLogger.log(`Debug logs enabled for "${context}" in hls.js version ${undefined}`);
-    } catch (e) {
-      /* log fn threw an exception. All logger methods are no-ops. */
-      return createLogger();
-    }
-  }
-  exportedLogger = newLogger;
-  return newLogger;
-}
-const logger = exportedLogger;
-
 const DECIMAL_RESOLUTION_REGEX = /^(\d+)x(\d+)$/;
 const ATTR_LIST_REGEX = /(.+?)=(".*?"|.*?)(?:,|$)/g;
 
@@ -522,6 +450,84 @@ class AttrList {
     return attrs;
   }
 }
+
+class Logger {
+  constructor(label, logger) {
+    this.trace = void 0;
+    this.debug = void 0;
+    this.log = void 0;
+    this.warn = void 0;
+    this.info = void 0;
+    this.error = void 0;
+    const lb = `[${label}]:`;
+    this.trace = noop;
+    this.debug = logger.debug.bind(null, lb);
+    this.log = logger.log.bind(null, lb);
+    this.warn = logger.warn.bind(null, lb);
+    this.info = logger.info.bind(null, lb);
+    this.error = logger.error.bind(null, lb);
+  }
+}
+const noop = function noop() {};
+const fakeLogger = {
+  trace: noop,
+  debug: noop,
+  log: noop,
+  warn: noop,
+  info: noop,
+  error: noop
+};
+function createLogger() {
+  return _extends({}, fakeLogger);
+}
+
+// let lastCallTime;
+// function formatMsgWithTimeInfo(type, msg) {
+//   const now = Date.now();
+//   const diff = lastCallTime ? '+' + (now - lastCallTime) : '0';
+//   lastCallTime = now;
+//   msg = (new Date(now)).toISOString() + ' | [' +  type + '] > ' + msg + ' ( ' + diff + ' ms )';
+//   return msg;
+// }
+
+function consolePrintFn(type, id) {
+  const func = self.console[type];
+  return func ? func.bind(self.console, `${id ? '[' + id + '] ' : ''}[${type}] >`) : noop;
+}
+function getLoggerFn(key, debugConfig, id) {
+  return debugConfig[key] ? debugConfig[key].bind(debugConfig) : consolePrintFn(key, id);
+}
+const exportedLogger = createLogger();
+function enableLogs(debugConfig, context, id) {
+  // check that console is available
+  const newLogger = createLogger();
+  if (typeof console === 'object' && debugConfig === true || typeof debugConfig === 'object') {
+    const keys = [
+    // Remove out from list here to hard-disable a log-level
+    // 'trace',
+    'debug', 'log', 'info', 'warn', 'error'];
+    keys.forEach(key => {
+      newLogger[key] = getLoggerFn(key, debugConfig, id);
+    });
+    // Some browsers don't allow to use bind on console object anyway
+    // fallback to default if needed
+    try {
+      newLogger.log(`Debug logs enabled for "${context}" in hls.js version ${undefined}`);
+    } catch (e) {
+      /* log fn threw an exception. All logger methods are no-ops. */
+      return createLogger();
+    }
+    // global exported logger uses the same functions as new logger without `id`
+    keys.forEach(key => {
+      exportedLogger[key] = getLoggerFn(key, debugConfig);
+    });
+  } else {
+    // Reset global exported logger
+    _extends(exportedLogger, newLogger);
+  }
+  return newLogger;
+}
+const logger = exportedLogger;
 
 // Avoid exporting const enum so that these values can be inlined
 
@@ -1035,7 +1041,7 @@ function getAesModeFromFullSegmentMethod(method) {
 // This file is inserted as a shim for modules which we do not want to include into the distro.
 // This replacement is done in the "alias" plugin of the rollup config.
 var empty = undefined;
-var Cues = /*@__PURE__*/getDefaultExportFromCjs(empty);
+var HevcVideoParser = /*@__PURE__*/getDefaultExportFromCjs(empty);
 
 function sliceUint8(array, start, end) {
   // @ts-expect-error This polyfills IE11 usage of Uint8Array slice.
@@ -1433,6 +1439,12 @@ function readUint32(buffer, offset) {
   const val = readSint32(buffer, offset);
   return val < 0 ? 4294967296 + val : val;
 }
+function readUint64(buffer, offset) {
+  let result = readUint32(buffer, offset);
+  result *= Math.pow(2, 32);
+  result += readUint32(buffer, offset + 4);
+  return result;
+}
 function readSint32(buffer, offset) {
   return buffer[offset] << 24 | buffer[offset + 1] << 16 | buffer[offset + 2] << 8 | buffer[offset + 3];
 }
@@ -1495,14 +1507,15 @@ function parseSegmentIndex(sidx) {
   let index = 8;
   const timescale = readUint32(sidx, index);
   index += 4;
-
-  // TODO: parse earliestPresentationTime and firstOffset
-  // usually zero in our case
-  const earliestPresentationTime = 0;
-  const firstOffset = 0;
+  let earliestPresentationTime = 0;
+  let firstOffset = 0;
   if (version === 0) {
+    earliestPresentationTime = readUint32(sidx, index);
+    firstOffset = readUint32(sidx, index + 4);
     index += 8;
   } else {
+    earliestPresentationTime = readUint64(sidx, index);
+    firstOffset = readUint64(sidx, index + 8);
     index += 16;
   }
 
@@ -1660,7 +1673,7 @@ function parseStsd(stsd) {
       {
         const codecBox = findBox(sampleEntries, [fourCC])[0];
         const esdsBox = findBox(codecBox.subarray(28), ['esds'])[0];
-        if (esdsBox && esdsBox.length > 12) {
+        if (esdsBox && esdsBox.length > 7) {
           let i = 4;
           // ES Descriptor tag
           if (esdsBox[i++] !== 0x03) {
@@ -1775,7 +1788,9 @@ function parseStsd(stsd) {
 }
 function skipBERInteger(bytes, i) {
   const limit = i + 5;
-  while (bytes[i++] & 0x80 && i < limit) {}
+  while (bytes[i++] & 0x80 && i < limit) {
+    /* do nothing */
+  }
   return i;
 }
 function toHex(x) {
@@ -1951,15 +1966,22 @@ function getDuration(data, initData) {
   }
   if (videoDuration === 0 && audioDuration === 0) {
     // If duration samples are not available in the traf use sidx subsegment_duration
+    let sidxMinStart = Infinity;
+    let sidxMaxEnd = 0;
     let sidxDuration = 0;
     const sidxs = findBox(data, ['sidx']);
     for (let i = 0; i < sidxs.length; i++) {
       const sidx = parseSegmentIndex(sidxs[i]);
       if (sidx != null && sidx.references) {
-        sidxDuration += sidx.references.reduce((dur, ref) => dur + ref.info.duration || 0, 0);
+        sidxMinStart = Math.min(sidxMinStart, sidx.earliestPresentationTime / sidx.timescale);
+        const subSegmentDuration = sidx.references.reduce((dur, ref) => dur + ref.info.duration || 0, 0);
+        sidxMaxEnd = Math.max(sidxMaxEnd, subSegmentDuration + sidx.earliestPresentationTime / sidx.timescale);
+        sidxDuration = sidxMaxEnd - sidxMinStart;
       }
     }
-    return sidxDuration;
+    if (sidxDuration && isFiniteNumber(sidxDuration)) {
+      return sidxDuration;
+    }
   }
   if (videoDuration) {
     return videoDuration;
@@ -3486,10 +3508,10 @@ class PlaylistLoader {
       const loaderContext = loader.context;
       if (loaderContext && loaderContext.url === context.url && loaderContext.level === context.level) {
         // same URL can't overlap
-        logger.trace('[playlist-loader]: playlist request ongoing');
+        this.hls.logger.trace('[playlist-loader]: playlist request ongoing');
         return;
       }
-      logger.log(`[playlist-loader]: aborting previous loader for type: ${context.type}`);
+      this.hls.logger.log(`[playlist-loader]: aborting previous loader for type: ${context.type}`);
       loader.abort();
     }
 
@@ -3599,7 +3621,7 @@ class PlaylistLoader {
       // alt audio rendition in which quality levels (main)
       // contains both audio+video. but with mixed audio track not signaled
       if (!embeddedAudioFound && levels[0].audioCodec && !levels[0].attrs.AUDIO) {
-        logger.log('[playlist-loader]: audio codec signaled in quality level, but no embedded audio track signaled, create one');
+        this.hls.logger.log('[playlist-loader]: audio codec signaled in quality level, but no embedded audio track signaled, create one');
         audioTracks.unshift({
           type: 'main',
           name: 'main',
@@ -3698,7 +3720,7 @@ class PlaylistLoader {
       message += ` id: ${context.id} group-id: "${context.groupId}"`;
     }
     const error = new Error(message);
-    logger.warn(`[playlist-loader]: ${message}`);
+    this.hls.logger.warn(`[playlist-loader]: ${message}`);
     let details = ErrorDetails.UNKNOWN;
     let fatal = false;
     const loader = this.getInternalLoader(context);
@@ -4018,11 +4040,10 @@ class ID3TrackController {
     this.media = data.media;
   }
   onMediaDetaching() {
-    if (!this.id3Track) {
-      return;
+    if (this.id3Track) {
+      clearCurrentCues(this.id3Track);
+      this.id3Track = null;
     }
-    clearCurrentCues(this.id3Track);
-    this.id3Track = null;
     this.media = null;
     this.dateRangeCuesAppended = {};
   }
@@ -5700,7 +5721,12 @@ class BasePlaylistController extends Logger {
         const cdnAge = lastAdvanced + details.ageHeader;
         let currentGoal = Math.min(cdnAge - details.partTarget, details.targetduration * 1.5);
         if (currentGoal > 0) {
-          if (previousDetails && currentGoal > previousDetails.tuneInGoal) {
+          if (cdnAge > details.targetduration * 3) {
+            // Omit segment and part directives when the last response was more than 3 target durations ago,
+            this.log(`Playlist last advanced ${lastAdvanced.toFixed(2)}s ago. Omitting segment and part directives.`);
+            msn = undefined;
+            part = undefined;
+          } else if (previousDetails != null && previousDetails.tuneInGoal && cdnAge - details.partTarget > previousDetails.tuneInGoal) {
             // If we attempted to get the next or latest playlist update, but currentGoal increased,
             // then we either can't catchup, or the "age" header cannot be trusted.
             this.warn(`CDN Tune-in goal increased from: ${previousDetails.tuneInGoal} to: ${currentGoal} with playlist age: ${details.age}`);
@@ -6565,8 +6591,7 @@ class AbrController extends Logger {
     return nextABRAutoLevel;
   }
   getAutoLevelKey() {
-    var _this$hls$mainForward;
-    return `${this.getBwEstimate()}_${(_this$hls$mainForward = this.hls.mainForwardBufferInfo) == null ? void 0 : _this$hls$mainForward.len}`;
+    return `${this.getBwEstimate()}_${this.getStarvationDelay().toFixed(2)}`;
   }
   getNextABRAutoLevel() {
     const {
@@ -6574,21 +6599,18 @@ class AbrController extends Logger {
       partCurrent,
       hls
     } = this;
+    if (hls.levels.length <= 1) {
+      return hls.loadLevel;
+    }
     const {
       maxAutoLevel,
       config,
-      minAutoLevel,
-      media
+      minAutoLevel
     } = hls;
     const currentFragDuration = partCurrent ? partCurrent.duration : fragCurrent ? fragCurrent.duration : 0;
-
-    // playbackRate is the absolute value of the playback rate; if media.playbackRate is 0, we use 1 to load as
-    // if we're playing back at the normal rate.
-    const playbackRate = media && media.playbackRate !== 0 ? Math.abs(media.playbackRate) : 1.0;
     const avgbw = this.getBwEstimate();
     // bufferStarvationDelay is the wall-clock time left until the playback buffer is exhausted.
-    const bufferInfo = hls.mainForwardBufferInfo;
-    const bufferStarvationDelay = (bufferInfo ? bufferInfo.len : 0) / playbackRate;
+    const bufferStarvationDelay = this.getStarvationDelay();
     let bwFactor = config.abrBandWidthFactor;
     let bwUpFactor = config.abrBandWidthUpFactor;
 
@@ -6630,6 +6652,18 @@ class AbrController extends Logger {
     }
     // or if bitrate is not lower, continue to use loadLevel
     return hls.loadLevel;
+  }
+  getStarvationDelay() {
+    const hls = this.hls;
+    const media = hls.media;
+    if (!media) {
+      return Infinity;
+    }
+    // playbackRate is the absolute value of the playback rate; if media.playbackRate is 0, we use 1 to load as
+    // if we're playing back at the normal rate.
+    const playbackRate = media && media.playbackRate !== 0 ? Math.abs(media.playbackRate) : 1.0;
+    const bufferInfo = hls.mainForwardBufferInfo;
+    return (bufferInfo ? bufferInfo.len : 0) / playbackRate;
   }
   getBwEstimate() {
     return this.bwEstimator.canEstimate() ? this.bwEstimator.getEstimate() : this.hls.config.abrEwmaDefaultEstimate;
@@ -6748,8 +6782,12 @@ class AbrController extends Logger {
     return -1;
   }
   set nextAutoLevel(nextLevel) {
-    const value = Math.max(this.hls.minAutoLevel, nextLevel);
-    if (this._nextAutoLevel != value) {
+    const {
+      maxAutoLevel,
+      minAutoLevel
+    } = this.hls;
+    const value = Math.min(Math.max(nextLevel, minAutoLevel), maxAutoLevel);
+    if (this._nextAutoLevel !== value) {
       this.nextAutoLevelKey = '';
       this._nextAutoLevel = value;
     }
@@ -6774,40 +6812,29 @@ class BufferHelper {
    * Return true if `media`'s buffered include `position`
    */
   static isBuffered(media, position) {
-    try {
-      if (media) {
-        const buffered = BufferHelper.getBuffered(media);
-        for (let i = 0; i < buffered.length; i++) {
-          if (position >= buffered.start(i) && position <= buffered.end(i)) {
-            return true;
-          }
+    if (media) {
+      const buffered = BufferHelper.getBuffered(media);
+      for (let i = buffered.length; i--;) {
+        if (position >= buffered.start(i) && position <= buffered.end(i)) {
+          return true;
         }
       }
-    } catch (error) {
-      // this is to catch
-      // InvalidStateError: Failed to read the 'buffered' property from 'SourceBuffer':
-      // This SourceBuffer has been removed from the parent media source
     }
     return false;
   }
   static bufferInfo(media, pos, maxHoleDuration) {
-    try {
-      if (media) {
-        const vbuffered = BufferHelper.getBuffered(media);
+    if (media) {
+      const vbuffered = BufferHelper.getBuffered(media);
+      if (vbuffered.length) {
         const buffered = [];
-        let i;
-        for (i = 0; i < vbuffered.length; i++) {
+        for (let i = 0; i < vbuffered.length; i++) {
           buffered.push({
             start: vbuffered.start(i),
             end: vbuffered.end(i)
           });
         }
-        return this.bufferedInfo(buffered, pos, maxHoleDuration);
+        return BufferHelper.bufferedInfo(buffered, pos, maxHoleDuration);
       }
-    } catch (error) {
-      // this is to catch
-      // InvalidStateError: Failed to read the 'buffered' property from 'SourceBuffer':
-      // This SourceBuffer has been removed from the parent media source
     }
     return {
       len: 0,
@@ -6819,14 +6846,7 @@ class BufferHelper {
   static bufferedInfo(buffered, pos, maxHoleDuration) {
     pos = Math.max(0, pos);
     // sort on buffer.start/smaller end (IE does not always return sorted buffered range)
-    buffered.sort(function (a, b) {
-      const diff = a.start - b.start;
-      if (diff) {
-        return diff;
-      } else {
-        return b.end - a.end;
-      }
-    });
+    buffered.sort((a, b) => a.start - b.start || b.end - a.end);
     let buffered2 = [];
     if (maxHoleDuration) {
       // there might be some small holes between buffer time range
@@ -6893,7 +6913,7 @@ class BufferHelper {
    */
   static getBuffered(media) {
     try {
-      return media.buffered;
+      return media.buffered || noopBuffered;
     } catch (e) {
       logger.log('failed to get media.buffered', e);
       return noopBuffered;
@@ -6918,24 +6938,22 @@ class BufferOperationQueue {
       this.executeNext(type);
     }
   }
-  insertAbort(operation, type) {
-    const queue = this.queues[type];
-    queue.unshift(operation);
-    this.executeNext(type);
-  }
   appendBlocker(type) {
-    let execute;
-    const promise = new Promise(resolve => {
-      execute = resolve;
+    return new Promise(resolve => {
+      const operation = {
+        execute: resolve,
+        onStart: () => {},
+        onComplete: () => {},
+        onError: () => {}
+      };
+      this.append(operation, type);
     });
-    const operation = {
-      execute,
-      onStart: () => {},
-      onComplete: () => {},
-      onError: () => {}
-    };
-    this.append(operation, type);
-    return promise;
+  }
+  unblockAudio(op) {
+    const queue = this.queues.audio;
+    if (queue[0] === op) {
+      this.shiftAndExecuteNext('audio');
+    }
   }
   executeNext(type) {
     const queue = this.queues[type];
@@ -6968,7 +6986,7 @@ class BufferOperationQueue {
 
 const VIDEO_CODEC_PROFILE_REPLACE = /(avc[1234]|hvc1|hev1|dvh[1e]|vp09|av01)(?:\.[^.,]+)+/;
 class BufferController extends Logger {
-  constructor(hls) {
+  constructor(hls, fragmentTracker) {
     super('buffer-controller', hls.logger);
     // The level details used to determine duration, target-duration and live
     this.details = null;
@@ -6979,6 +6997,7 @@ class BufferController extends Logger {
     // References to event listeners for each SourceBuffer, so that they can be referenced for event removal
     this.listeners = void 0;
     this.hls = void 0;
+    this.fragmentTracker = void 0;
     // The number of BUFFER_CODEC events received before any sourceBuffers are created
     this.bufferCodecEventsExpected = 0;
     // The total number of BUFFER_CODEC events received
@@ -6989,6 +7008,10 @@ class BufferController extends Logger {
     this.mediaSource = null;
     // Last MP3 audio chunk appended
     this.lastMpegAudioChunk = null;
+    // Audio fragment blocked from appending until corresponding video appends or context changes
+    this.blockedAudioAppend = null;
+    // Keep track of video append position for unblocking audio
+    this.lastVideoAppendEnd = 0;
     this.appendSource = void 0;
     // counters
     this.appendErrors = {
@@ -7020,7 +7043,10 @@ class BufferController extends Logger {
       this.log('Media source opened');
       if (media) {
         media.removeEventListener('emptied', this._onMediaEmptied);
-        this.updateMediaElementDuration();
+        const durationAndRange = this.getDurationAndRange();
+        if (durationAndRange) {
+          this.updateMediaSource(durationAndRange);
+        }
         this.hls.trigger(Events.MEDIA_ATTACHED, {
           media,
           mediaSource: mediaSource
@@ -7048,7 +7074,8 @@ class BufferController extends Logger {
       }
     };
     this.hls = hls;
-    this.appendSource = hls.config.preferManagedMediaSource;
+    this.fragmentTracker = fragmentTracker;
+    this.appendSource = hls.config.preferManagedMediaSource && typeof self !== 'undefined' && self.ManagedMediaSource;
     this._initSourceBuffer();
     this.registerListeners();
   }
@@ -7060,7 +7087,7 @@ class BufferController extends Logger {
     this.details = null;
     this.lastMpegAudioChunk = null;
     // @ts-ignore
-    this.hls = null;
+    this.hls = this.fragmentTracker = null;
     // @ts-ignore
     this._onMediaSourceOpen = this._onMediaSourceClose = null;
     // @ts-ignore
@@ -7116,6 +7143,8 @@ class BufferController extends Logger {
       audiovideo: 0
     };
     this.lastMpegAudioChunk = null;
+    this.blockedAudioAppend = null;
+    this.lastVideoAppendEnd = 0;
   }
   onManifestLoading() {
     this.bufferCodecEventsExpected = this._bufferCodecEventsTotal = 0;
@@ -7144,8 +7173,10 @@ class BufferController extends Logger {
       ms.addEventListener('sourceopen', this._onMediaSourceOpen);
       ms.addEventListener('sourceended', this._onMediaSourceEnded);
       ms.addEventListener('sourceclose', this._onMediaSourceClose);
-      ms.addEventListener('startstreaming', this._onStartStreaming);
-      ms.addEventListener('endstreaming', this._onEndStreaming);
+      if (this.appendSource) {
+        ms.addEventListener('startstreaming', this._onStartStreaming);
+        ms.addEventListener('endstreaming', this._onEndStreaming);
+      }
 
       // cache the locally generated object url
       const objectUrl = this._objectUrl = self.URL.createObjectURL(ms);
@@ -7192,36 +7223,38 @@ class BufferController extends Logger {
       mediaSource.removeEventListener('sourceopen', this._onMediaSourceOpen);
       mediaSource.removeEventListener('sourceended', this._onMediaSourceEnded);
       mediaSource.removeEventListener('sourceclose', this._onMediaSourceClose);
-      mediaSource.removeEventListener('startstreaming', this._onStartStreaming);
-      mediaSource.removeEventListener('endstreaming', this._onEndStreaming);
-
-      // Detach properly the MediaSource from the HTMLMediaElement as
-      // suggested in https://github.com/w3c/media-source/issues/53.
-      if (media) {
-        media.removeEventListener('emptied', this._onMediaEmptied);
-        if (_objectUrl) {
-          self.URL.revokeObjectURL(_objectUrl);
-        }
-
-        // clean up video tag src only if it's our own url. some external libraries might
-        // hijack the video tag and change its 'src' without destroying the Hls instance first
-        if (this.mediaSrc === _objectUrl) {
-          media.removeAttribute('src');
-          if (this.appendSource) {
-            removeSourceChildren(media);
-          }
-          media.load();
-        } else {
-          this.warn('media|source.src was changed by a third party - skip cleanup');
-        }
+      if (this.appendSource) {
+        mediaSource.removeEventListener('startstreaming', this._onStartStreaming);
+        mediaSource.removeEventListener('endstreaming', this._onEndStreaming);
       }
       this.mediaSource = null;
-      this.media = null;
       this._objectUrl = null;
-      this.bufferCodecEventsExpected = this._bufferCodecEventsTotal;
-      this.pendingTracks = {};
-      this.tracks = {};
     }
+
+    // Detach properly the MediaSource from the HTMLMediaElement as
+    // suggested in https://github.com/w3c/media-source/issues/53.
+    if (media) {
+      media.removeEventListener('emptied', this._onMediaEmptied);
+      if (_objectUrl) {
+        self.URL.revokeObjectURL(_objectUrl);
+      }
+
+      // clean up video tag src only if it's our own url. some external libraries might
+      // hijack the video tag and change its 'src' without destroying the Hls instance first
+      if (this.mediaSrc === _objectUrl) {
+        media.removeAttribute('src');
+        if (this.appendSource) {
+          removeSourceChildren(media);
+        }
+        media.load();
+      } else {
+        this.warn('media|source.src was changed by a third party - skip cleanup');
+      }
+      this.media = null;
+    }
+    this.bufferCodecEventsExpected = this._bufferCodecEventsTotal;
+    this.pendingTracks = {};
+    this.tracks = {};
     this.hls.trigger(Events.MEDIA_DETACHED, undefined);
   }
   onBufferReset() {
@@ -7229,6 +7262,7 @@ class BufferController extends Logger {
       this.resetBuffer(type);
     });
     this._initSourceBuffer();
+    this.hls.resumeBuffering();
   }
   resetBuffer(type) {
     const sb = this.sourceBuffer[type];
@@ -7252,9 +7286,10 @@ class BufferController extends Logger {
     const trackNames = Object.keys(data);
     trackNames.forEach(trackName => {
       if (sourceBufferCount) {
+        var _track$buffer;
         // check if SourceBuffer codec needs to change
         const track = this.tracks[trackName];
-        if (track && typeof track.buffer.changeType === 'function') {
+        if (track && typeof ((_track$buffer = track.buffer) == null ? void 0 : _track$buffer.changeType) === 'function') {
           var _trackCodec;
           const {
             id,
@@ -7269,7 +7304,7 @@ class BufferController extends Logger {
           const nextCodec = (_trackCodec = trackCodec) == null ? void 0 : _trackCodec.replace(VIDEO_CODEC_PROFILE_REPLACE, '$1');
           if (trackCodec && currentCodec !== nextCodec) {
             if (trackName.slice(0, 5) === 'audio') {
-              trackCodec = getCodecCompatibleName(trackCodec, this.hls.config.preferManagedMediaSource);
+              trackCodec = getCodecCompatibleName(trackCodec, this.appendSource);
             }
             const mimeType = `${container};codecs=${trackCodec}`;
             this.appendChangeType(trackName, mimeType);
@@ -7324,20 +7359,54 @@ class BufferController extends Logger {
     };
     operationQueue.append(operation, type, !!this.pendingTracks[type]);
   }
+  blockAudio(partOrFrag) {
+    var _this$fragmentTracker;
+    const pStart = partOrFrag.start;
+    const pTime = pStart + partOrFrag.duration * 0.05;
+    const atGap = ((_this$fragmentTracker = this.fragmentTracker.getAppendedFrag(pStart, PlaylistLevelType.MAIN)) == null ? void 0 : _this$fragmentTracker.gap) === true;
+    if (atGap) {
+      return;
+    }
+    const op = {
+      execute: () => {
+        var _this$fragmentTracker2;
+        if (this.lastVideoAppendEnd > pTime || this.sourceBuffer.video && BufferHelper.isBuffered(this.sourceBuffer.video, pTime) || ((_this$fragmentTracker2 = this.fragmentTracker.getAppendedFrag(pTime, PlaylistLevelType.MAIN)) == null ? void 0 : _this$fragmentTracker2.gap) === true) {
+          this.blockedAudioAppend = null;
+          this.operationQueue.shiftAndExecuteNext('audio');
+        }
+      },
+      onStart: () => {},
+      onComplete: () => {},
+      onError: () => {}
+    };
+    this.blockedAudioAppend = {
+      op,
+      frag: partOrFrag
+    };
+    this.operationQueue.append(op, 'audio', true);
+  }
+  unblockAudio() {
+    const blockedAudioAppend = this.blockedAudioAppend;
+    if (blockedAudioAppend) {
+      this.blockedAudioAppend = null;
+      this.operationQueue.unblockAudio(blockedAudioAppend.op);
+    }
+  }
   onBufferAppending(event, eventData) {
     const {
-      hls,
       operationQueue,
       tracks
     } = this;
     const {
       data,
       type,
+      parent,
       frag,
       part,
       chunkMeta
     } = eventData;
     const chunkStats = chunkMeta.buffering[type];
+    const sn = frag.sn;
     const bufferAppendingStart = self.performance.now();
     chunkStats.start = bufferAppendingStart;
     const fragBuffering = frag.stats.buffering;
@@ -7360,7 +7429,36 @@ class BufferController extends Logger {
       checkTimestampOffset = !this.lastMpegAudioChunk || chunkMeta.id === 1 || this.lastMpegAudioChunk.sn !== chunkMeta.sn;
       this.lastMpegAudioChunk = chunkMeta;
     }
-    const fragStart = frag.start;
+
+    // Block audio append until overlapping video append
+    const videoSb = this.sourceBuffer.video;
+    if (videoSb && sn !== 'initSegment') {
+      const partOrFrag = part || frag;
+      const blockedAudioAppend = this.blockedAudioAppend;
+      if (type === 'audio' && parent !== 'main' && !this.blockedAudioAppend) {
+        const pStart = partOrFrag.start;
+        const pTime = pStart + partOrFrag.duration * 0.05;
+        const vbuffered = videoSb.buffered;
+        const vappending = this.operationQueue.current('video');
+        if (!vbuffered.length && !vappending) {
+          // wait for video before appending audio
+          this.blockAudio(partOrFrag);
+        } else if (!vappending && !BufferHelper.isBuffered(videoSb, pTime) && this.lastVideoAppendEnd < pTime) {
+          // audio is ahead of video
+          this.blockAudio(partOrFrag);
+        }
+      } else if (type === 'video') {
+        const videoAppendEnd = partOrFrag.end;
+        if (blockedAudioAppend) {
+          const audioStart = blockedAudioAppend.frag.start;
+          if (videoAppendEnd > audioStart || videoAppendEnd < this.lastVideoAppendEnd || BufferHelper.isBuffered(videoSb, audioStart)) {
+            this.unblockAudio();
+          }
+        }
+        this.lastVideoAppendEnd = videoAppendEnd;
+      }
+    }
+    const fragStart = (part || frag).start;
     const operation = {
       execute: () => {
         chunkStats.executeStart = self.performance.now();
@@ -7369,7 +7467,7 @@ class BufferController extends Logger {
           if (sb) {
             const delta = fragStart - sb.timestampOffset;
             if (Math.abs(delta) >= 0.1) {
-              this.log(`Updating audio SourceBuffer timestampOffset to ${fragStart} (delta: ${delta}) sn: ${frag.sn})`);
+              this.log(`Updating audio SourceBuffer timestampOffset to ${fragStart} (delta: ${delta}) sn: ${sn})`);
               sb.timestampOffset = fragStart;
             }
           }
@@ -7436,22 +7534,21 @@ class BufferController extends Logger {
           /* with UHD content, we could get loop of quota exceeded error until
             browser is able to evict some data from sourcebuffer. Retrying can help recover.
           */
-          this.warn(`Failed ${appendErrorCount}/${hls.config.appendErrorMaxRetry} times to append segment in "${type}" sourceBuffer`);
-          if (appendErrorCount >= hls.config.appendErrorMaxRetry) {
+          this.warn(`Failed ${appendErrorCount}/${this.hls.config.appendErrorMaxRetry} times to append segment in "${type}" sourceBuffer`);
+          if (appendErrorCount >= this.hls.config.appendErrorMaxRetry) {
             event.fatal = true;
           }
         }
-        hls.trigger(Events.ERROR, event);
+        this.hls.trigger(Events.ERROR, event);
       }
     };
     operationQueue.append(operation, type, !!this.pendingTracks[type]);
   }
-  onBufferFlushing(event, data) {
-    const {
-      operationQueue
-    } = this;
-    const flushOperation = type => ({
-      execute: this.removeExecutor.bind(this, type, data.startOffset, data.endOffset),
+  getFlushOp(type, start, end) {
+    return {
+      execute: () => {
+        this.removeExecutor(type, start, end);
+      },
       onStart: () => {
         // logger.debug(`[buffer-controller]: Started flushing ${data.startOffset} -> ${data.endOffset} for ${type} Source Buffer`);
       },
@@ -7464,12 +7561,22 @@ class BufferController extends Logger {
       onError: error => {
         this.warn(`Failed to remove from ${type} SourceBuffer`, error);
       }
-    });
-    if (data.type) {
-      operationQueue.append(flushOperation(data.type), data.type);
+    };
+  }
+  onBufferFlushing(event, data) {
+    const {
+      operationQueue
+    } = this;
+    const {
+      type,
+      startOffset,
+      endOffset
+    } = data;
+    if (type) {
+      operationQueue.append(this.getFlushOp(type, startOffset, endOffset), type);
     } else {
-      this.getSourceBufferTypes().forEach(type => {
-        operationQueue.append(flushOperation(type), type);
+      this.getSourceBufferTypes().forEach(sbType => {
+        operationQueue.append(this.getFlushOp(sbType, startOffset, endOffset), sbType);
       });
     }
   }
@@ -7516,6 +7623,9 @@ class BufferController extends Logger {
   // on BUFFER_EOS mark matching sourcebuffer(s) as ended and trigger checkEos()
   // an undefined data.type will mark all buffers as EOS.
   onBufferEos(event, data) {
+    if (data.type === 'video') {
+      this.unblockAudio();
+    }
     const ended = this.getSourceBufferTypes().reduce((acc, type) => {
       const sb = this.sourceBuffer[type];
       if (sb && (!data.type || data.type === type)) {
@@ -7558,10 +7668,14 @@ class BufferController extends Logger {
       return;
     }
     this.details = details;
+    const durationAndRange = this.getDurationAndRange();
+    if (!durationAndRange) {
+      return;
+    }
     if (this.getSourceBufferTypes().length) {
-      this.blockBuffers(this.updateMediaElementDuration.bind(this));
+      this.blockBuffers(() => this.updateMediaSource(durationAndRange));
     } else {
-      this.updateMediaElementDuration();
+      this.updateMediaSource(durationAndRange);
     }
   }
   trimBuffers() {
@@ -7666,9 +7780,9 @@ class BufferController extends Logger {
    * 'liveDurationInfinity` is set to `true`
    * More details: https://github.com/video-dev/hls.js/issues/355
    */
-  updateMediaElementDuration() {
+  getDurationAndRange() {
     if (!this.details || !this.media || !this.mediaSource || this.mediaSource.readyState !== 'open') {
-      return;
+      return null;
     }
     const {
       details,
@@ -7682,25 +7796,41 @@ class BufferController extends Logger {
     if (details.live && hls.config.liveDurationInfinity) {
       // Override duration to Infinity
       mediaSource.duration = Infinity;
-      this.updateSeekableRange(details);
+      const len = details.fragments.length;
+      if (len && details.live && !!mediaSource.setLiveSeekableRange) {
+        const start = Math.max(0, details.fragments[0].start);
+        const end = Math.max(start, start + details.totalduration);
+        return {
+          duration: Infinity,
+          start,
+          end
+        };
+      }
+      return {
+        duration: Infinity
+      };
     } else if (levelDuration > msDuration && levelDuration > mediaDuration || !isFiniteNumber(mediaDuration)) {
-      // levelDuration was the last value we set.
-      // not using mediaSource.duration as the browser may tweak this value
-      // only update Media Source duration if its value increase, this is to avoid
-      // flushing already buffered portion when switching between quality level
-      this.log(`Updating Media Source duration to ${levelDuration.toFixed(3)}`);
-      mediaSource.duration = levelDuration;
+      return {
+        duration: levelDuration
+      };
     }
+    return null;
   }
-  updateSeekableRange(levelDetails) {
-    const mediaSource = this.mediaSource;
-    const fragments = levelDetails.fragments;
-    const len = fragments.length;
-    if (len && levelDetails.live && mediaSource != null && mediaSource.setLiveSeekableRange) {
-      const start = Math.max(0, fragments[0].start);
-      const end = Math.max(start, start + levelDetails.totalduration);
-      this.log(`Media Source duration is set to ${mediaSource.duration}. Setting seekable range to ${start}-${end}.`);
-      mediaSource.setLiveSeekableRange(start, end);
+  updateMediaSource({
+    duration,
+    start,
+    end
+  }) {
+    if (!this.media || !this.mediaSource || this.mediaSource.readyState !== 'open') {
+      return;
+    }
+    if (isFiniteNumber(duration)) {
+      this.log(`Updating Media Source duration to ${duration.toFixed(3)}`);
+    }
+    this.mediaSource.duration = duration;
+    if (start !== undefined && end !== undefined) {
+      this.log(`Media Source duration is set to ${this.mediaSource.duration}. Setting seekable range to ${start}-${end}.`);
+      this.mediaSource.setLiveSeekableRange(start, end);
     }
   }
   checkPendingTracks() {
@@ -7758,7 +7888,7 @@ class BufferController extends Logger {
         let codec = track.levelCodec || track.codec;
         if (codec) {
           if (trackName.slice(0, 5) === 'audio') {
-            codec = getCodecCompatibleName(codec, this.hls.config.preferManagedMediaSource);
+            codec = getCodecCompatibleName(codec, this.appendSource);
           }
         }
         const mimeType = `${track.container};codecs=${codec}`;
@@ -7770,15 +7900,17 @@ class BufferController extends Logger {
           this.addBufferListener(sbName, 'updateend', this._onSBUpdateEnd);
           this.addBufferListener(sbName, 'error', this._onSBUpdateError);
           // ManagedSourceBuffer bufferedchange event
-          this.addBufferListener(sbName, 'bufferedchange', (type, event) => {
-            // If media was ejected check for a change. Added ranges are redundant with changes on 'updateend' event.
-            const removedRanges = event.removedRanges;
-            if (removedRanges != null && removedRanges.length) {
-              this.hls.trigger(Events.BUFFER_FLUSHED, {
-                type: trackName
-              });
-            }
-          });
+          if (this.appendSource) {
+            this.addBufferListener(sbName, 'bufferedchange', (type, event) => {
+              // If media was ejected check for a change. Added ranges are redundant with changes on 'updateend' event.
+              const removedRanges = event.removedRanges;
+              if (removedRanges != null && removedRanges.length) {
+                this.hls.trigger(Events.BUFFER_FLUSHED, {
+                  type: trackName
+                });
+              }
+            });
+          }
           this.tracks[trackName] = {
             buffer: sb,
             codec: codec,
@@ -7896,6 +8028,7 @@ class BufferController extends Logger {
       }
       return;
     }
+    sb.ending = false;
     sb.ended = false;
     sb.appendBuffer(data);
   }
@@ -7915,10 +8048,14 @@ class BufferController extends Logger {
 
     // logger.debug(`[buffer-controller]: Blocking ${buffers} SourceBuffer`);
     const blockingOperations = buffers.map(type => operationQueue.appendBlocker(type));
-    Promise.all(blockingOperations).then(() => {
+    const audioBlocked = buffers.length > 1 && !!this.blockedAudioAppend;
+    if (audioBlocked) {
+      this.unblockAudio();
+    }
+    Promise.all(blockingOperations).then(result => {
       // logger.debug(`[buffer-controller]: Blocking operation resolved; unblocking ${buffers} SourceBuffer`);
       onUnblocked();
-      buffers.forEach(type => {
+      buffers.forEach((type, i) => {
         const sb = this.sourceBuffer[type];
         // Only cycle the queue if the SB is not updating. There's a bug in Chrome which sets the SB updating flag to
         // true when changing the MediaSource duration (https://bugs.chromium.org/p/chromium/issues/detail?id=959359&can=2&q=mediasource%20duration)
@@ -8067,6 +8204,7 @@ class CapLevelController {
   }
   onMediaDetaching() {
     this.stopCapping();
+    this.media = null;
   }
   detectPlayerSize() {
     if (this.media) {
@@ -8082,7 +8220,7 @@ class CapLevelController {
           hls.logger.log(`Setting autoLevelCapping to ${maxLevel}: ${levels[maxLevel].height}p@${levels[maxLevel].bitrate} for media ${this.mediaWidth}x${this.mediaHeight}`);
         }
         hls.autoLevelCapping = maxLevel;
-        if (hls.autoLevelCapping > this.autoLevelCapping && this.streamController) {
+        if (hls.autoLevelEnabled && hls.autoLevelCapping > this.autoLevelCapping && this.streamController) {
           // if auto level capping has a higher value for the previous one, flush the buffer using nextLevelSwitch
           // usually happen when the user go to the fullscreen mode.
           this.streamController.nextLevelSwitch();
@@ -8218,9 +8356,11 @@ class FPSController {
   }
   registerListeners() {
     this.hls.on(Events.MEDIA_ATTACHING, this.onMediaAttaching, this);
+    this.hls.on(Events.MEDIA_DETACHING, this.onMediaDetaching, this);
   }
   unregisterListeners() {
     this.hls.off(Events.MEDIA_ATTACHING, this.onMediaAttaching, this);
+    this.hls.off(Events.MEDIA_DETACHING, this.onMediaDetaching, this);
   }
   destroy() {
     if (this.timer) {
@@ -8241,6 +8381,9 @@ class FPSController {
       self.clearInterval(this.timer);
       this.timer = self.setInterval(this.checkFPSInterval.bind(this), config.fpsDroppedMonitoringPeriod);
     }
+  }
+  onMediaDetaching() {
+    this.media = null;
   }
   checkFPS(video, decodedFrames, droppedFrames) {
     const currentTime = performance.now();
@@ -9513,7 +9656,7 @@ const hlsDefaultConfig = _objectSpread2(_objectSpread2({
 });
 function timelineConfig() {
   return {
-    cueHandler: Cues,
+    cueHandler: HevcVideoParser,
     // used by timeline-controller
     enableWebVTT: false,
     // used by timeline-controller
@@ -10054,7 +10197,12 @@ class LevelController extends BasePlaylistController {
       if (curLevel.fragmentError === 0) {
         curLevel.loadError = 0;
       }
-      this.playlistLoaded(level, data, curLevel.details);
+      // Ignore matching details populated by loading a Media Playlist directly
+      let previousDetails = curLevel.details;
+      if (previousDetails === data.details && previousDetails.advanced) {
+        previousDetails = undefined;
+      }
+      this.playlistLoaded(level, data, previousDetails);
     } else if ((_data$deliveryDirecti2 = data.deliveryDirectives) != null && _data$deliveryDirecti2.skip) {
       // received a delta playlist update that cannot be merged
       details.deltaUpdateFailed = true;
@@ -10232,13 +10380,16 @@ class FragmentTracker {
    * If not found any Fragment, return null
    */
   getBufferedFrag(position, levelType) {
+    return this.getFragAtPos(position, levelType, true);
+  }
+  getFragAtPos(position, levelType, buffered) {
     const {
       fragments
     } = this;
     const keys = Object.keys(fragments);
     for (let i = keys.length; i--;) {
       const fragmentEntity = fragments[keys[i]];
-      if ((fragmentEntity == null ? void 0 : fragmentEntity.body.type) === levelType && fragmentEntity.buffered) {
+      if ((fragmentEntity == null ? void 0 : fragmentEntity.body.type) === levelType && (!buffered || fragmentEntity.buffered)) {
         const frag = fragmentEntity.body;
         if (frag.start <= position && position <= frag.end) {
           return frag;
@@ -10493,7 +10644,8 @@ class FragmentTracker {
     const {
       frag,
       part,
-      timeRanges
+      timeRanges,
+      type
     } = data;
     if (frag.sn === 'initSegment') {
       return;
@@ -10508,10 +10660,8 @@ class FragmentTracker {
     }
     // Store the latest timeRanges loaded in the buffer
     this.timeRanges = timeRanges;
-    Object.keys(timeRanges).forEach(elementaryStream => {
-      const timeRange = timeRanges[elementaryStream];
-      this.detectEvictedFragments(elementaryStream, timeRange, playlistType, part);
-    });
+    const timeRange = timeRanges[type];
+    this.detectEvictedFragments(type, timeRange, playlistType, part);
   }
   onFragBuffered(event, data) {
     this.detectPartialFragments(data);
@@ -11950,6 +12100,8 @@ class BaseStreamController extends TaskLoop {
     this.startFragRequested = false;
     this.decrypter = void 0;
     this.initPTS = [];
+    this.buffering = true;
+    this.loadingParts = false;
     this.onMediaSeeking = () => {
       const {
         config,
@@ -11986,6 +12138,14 @@ class BaseStreamController extends TaskLoop {
         // Remove gap fragments
         this.fragmentTracker.removeFragmentsInRange(currentTime, Infinity, this.playlistType, true);
         this.lastCurrentTime = currentTime;
+        if (!this.loadingParts) {
+          const bufferEnd = Math.max(bufferInfo.end, currentTime);
+          const shouldLoadParts = this.shouldLoadParts(this.getLevelDetails(), bufferEnd);
+          if (shouldLoadParts) {
+            this.log(`LL-Part loading ON after seeking to ${currentTime.toFixed(2)} with buffer @${bufferEnd.toFixed(2)}`);
+            this.loadingParts = shouldLoadParts;
+          }
+        }
       }
 
       // in case seeking occurs although no media buffered, adjust startPosition and nextLoadPosition to seek target
@@ -12055,6 +12215,12 @@ class BaseStreamController extends TaskLoop {
     this.clearNextTick();
     this.state = State.STOPPED;
   }
+  pauseBuffering() {
+    this.buffering = false;
+  }
+  resumeBuffering() {
+    this.buffering = true;
+  }
   _streamEnded(bufferInfo, levelDetails) {
     // If playlist is live, there is another buffered range after the current range, nothing buffered, media is detached,
     // of nothing loading/loaded return false
@@ -12119,7 +12285,6 @@ class BaseStreamController extends TaskLoop {
     this.initPTS = [];
   }
   onHandlerDestroying() {
-    this.hls.off(Events.MANIFEST_LOADED, this.onManifestLoaded, this);
     this.stopLoad();
     super.onHandlerDestroying();
     // @ts-ignore
@@ -12298,7 +12463,9 @@ class BaseStreamController extends TaskLoop {
       throw new Error('init load aborted, missing levels');
     }
     const stats = data.frag.stats;
-    this.state = State.IDLE;
+    if (this.state !== State.STOPPED) {
+      this.state = State.IDLE;
+    }
     data.frag.data = new Uint8Array(data.payload);
     stats.parsing.start = stats.buffering.start = self.performance.now();
     stats.parsing.end = stats.buffering.end = self.performance.now();
@@ -12390,8 +12557,16 @@ class BaseStreamController extends TaskLoop {
     } else if (!frag.encrypted && details.encryptedFragments.length) {
       this.keyLoader.loadClear(frag, details.encryptedFragments);
     }
+    const fragPrevious = this.fragPrevious;
+    if (frag.sn !== 'initSegment' && (!fragPrevious || frag.sn !== fragPrevious.sn)) {
+      const shouldLoadParts = this.shouldLoadParts(level.details, frag.end);
+      if (shouldLoadParts !== this.loadingParts) {
+        this.log(`LL-Part loading ${shouldLoadParts ? 'ON' : 'OFF'} loading sn ${fragPrevious == null ? void 0 : fragPrevious.sn}->${frag.sn}`);
+        this.loadingParts = shouldLoadParts;
+      }
+    }
     targetBufferTime = Math.max(frag.start, targetBufferTime || 0);
-    if (this.config.lowLatencyMode && frag.sn !== 'initSegment') {
+    if (this.loadingParts && frag.sn !== 'initSegment') {
       const partList = details.partList;
       if (partList && progressCallback) {
         if (targetBufferTime > frag.end && details.fragmentHint) {
@@ -12428,6 +12603,13 @@ class BaseStreamController extends TaskLoop {
           return Promise.resolve(null);
         }
       }
+    }
+    if (frag.sn !== 'initSegment' && this.loadingParts) {
+      this.log(`LL-Part loading OFF after next part miss @${targetBufferTime.toFixed(2)}`);
+      this.loadingParts = false;
+    } else if (!frag.url) {
+      // Selected fragment hint for part but not loading parts
+      return Promise.resolve(null);
     }
     this.log(`Loading fragment ${frag.sn} cc: ${frag.cc} ${details ? 'of [' + details.startSN + '-' + details.endSN + '] ' : ''}${this.playlistType === PlaylistLevelType.MAIN ? 'level' : 'track'}: ${frag.level}, target: ${parseFloat(targetBufferTime.toFixed(3))}`);
     // Don't update nextLoadPosition for fragments which are not buffered
@@ -12527,7 +12709,35 @@ class BaseStreamController extends TaskLoop {
     if (part) {
       part.stats.parsing.end = now;
     }
+    // See if part loading should be disabled/enabled based on buffer and playback position.
+    if (frag.sn !== 'initSegment') {
+      const levelDetails = this.getLevelDetails();
+      const loadingPartsAtEdge = levelDetails && frag.sn > levelDetails.endSN;
+      const shouldLoadParts = loadingPartsAtEdge || this.shouldLoadParts(levelDetails, frag.end);
+      if (shouldLoadParts !== this.loadingParts) {
+        this.log(`LL-Part loading ${shouldLoadParts ? 'ON' : 'OFF'} after parsing segment ending @${frag.end.toFixed(2)}`);
+        this.loadingParts = shouldLoadParts;
+      }
+    }
     this.updateLevelTiming(frag, part, level, chunkMeta.partial);
+  }
+  shouldLoadParts(details, bufferEnd) {
+    if (this.config.lowLatencyMode) {
+      if (!details) {
+        return this.loadingParts;
+      }
+      if (details != null && details.partList) {
+        var _details$fragmentHint;
+        // Buffer must be ahead of first part + duration of parts after last segment
+        // and playback must be at or past segment adjacent to part list
+        const firstPart = details.partList[0];
+        const safePartStart = firstPart.end + (((_details$fragmentHint = details.fragmentHint) == null ? void 0 : _details$fragmentHint.duration) || 0);
+        if (bufferEnd >= safePartStart && this.lastCurrentTime > firstPart.start - firstPart.fragment.duration) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
   getCurrentContext(chunkMeta) {
     const {
@@ -12629,7 +12839,7 @@ class BaseStreamController extends TaskLoop {
     // Workaround flaw in getting forward buffer when maxBufferHole is smaller than gap at current pos
     if (bufferInfo.len === 0 && bufferInfo.nextStart !== undefined) {
       const bufferedFragAtPos = this.fragmentTracker.getBufferedFrag(pos, type);
-      if (bufferedFragAtPos && bufferInfo.nextStart < bufferedFragAtPos.end) {
+      if (bufferedFragAtPos && (bufferInfo.nextStart <= bufferedFragAtPos.end || bufferedFragAtPos.gap)) {
         return BufferHelper.bufferInfo(bufferable, pos, Math.max(bufferInfo.nextStart, maxBufferHole));
       }
     }
@@ -12677,7 +12887,8 @@ class BaseStreamController extends TaskLoop {
       config
     } = this;
     const start = fragments[0].start;
-    let frag;
+    const canLoadParts = config.lowLatencyMode && !!levelDetails.partList;
+    let frag = null;
     if (levelDetails.live) {
       const initialLiveManifestSize = config.initialLiveManifestSize;
       if (fragLen < initialLiveManifestSize) {
@@ -12689,6 +12900,10 @@ class BaseStreamController extends TaskLoop {
       // Do not load using live logic if the starting frag is requested - we want to use getFragmentAtPosition() so that
       // we get the fragment matching that start time
       if (!levelDetails.PTSKnown && !this.startFragRequested && this.startPosition === -1 || pos < start) {
+        if (canLoadParts && !this.loadingParts) {
+          this.log(`LL-Part loading ON for initial live fragment`);
+          this.loadingParts = true;
+        }
         frag = this.getInitialLiveFragment(levelDetails, fragments);
         this.startPosition = this.nextLoadPosition = frag ? this.hls.liveSyncPosition || frag.start : pos;
       }
@@ -12699,7 +12914,7 @@ class BaseStreamController extends TaskLoop {
 
     // If we haven't run into any special cases already, just load the fragment most closely matching the requested position
     if (!frag) {
-      const end = config.lowLatencyMode ? levelDetails.partEnd : levelDetails.fragmentEnd;
+      const end = this.loadingParts ? levelDetails.partEnd : levelDetails.fragmentEnd;
       frag = this.getFragmentAtPosition(pos, end, levelDetails);
     }
     return this.mapToInitFragWhenRequired(frag);
@@ -12821,7 +13036,7 @@ class BaseStreamController extends TaskLoop {
     } = levelDetails;
     const tolerance = config.maxFragLookUpTolerance;
     const partList = levelDetails.partList;
-    const loadingParts = !!(config.lowLatencyMode && partList != null && partList.length && fragmentHint);
+    const loadingParts = !!(this.loadingParts && partList != null && partList.length && fragmentHint);
     if (loadingParts && fragmentHint && !this.bitrateTest) {
       // Include incomplete fragment with parts at end
       fragments = fragments.concat(fragmentHint);
@@ -13082,7 +13297,9 @@ class BaseStreamController extends TaskLoop {
     this.log('Reset loading state');
     this.fragCurrent = null;
     this.fragPrevious = null;
-    this.state = State.IDLE;
+    if (this.state !== State.STOPPED) {
+      this.state = State.IDLE;
+    }
   }
   resetStartWhenNotLoaded(level) {
     // if loadedmetadata is not set, it means that first frag request failed
@@ -14634,599 +14851,6 @@ class AvcVideoParser extends BaseVideoParser {
       height: (2 - frameMbsOnlyFlag) * (picHeightInMapUnitsMinus1 + 1) * 16 - (frameMbsOnlyFlag ? 2 : 4) * (frameCropTopOffset + frameCropBottomOffset),
       pixelRatio: pixelRatio
     };
-  }
-}
-
-class HevcVideoParser extends BaseVideoParser {
-  constructor(...args) {
-    super(...args);
-    this.initVPS = null;
-  }
-  parsePES(track, textTrack, pes, last, duration) {
-    const units = this.parseNALu(track, pes.data);
-    let VideoSample = this.VideoSample;
-    let push;
-    let spsfound = false;
-    // free pes.data to save up some memory
-    pes.data = null;
-
-    // if new NAL units found and last sample still there, let's push ...
-    // this helps parsing streams with missing AUD (only do this if AUD never found)
-    if (VideoSample && units.length && !track.audFound) {
-      this.pushAccessUnit(VideoSample, track);
-      VideoSample = this.VideoSample = this.createVideoSample(false, pes.pts, pes.dts, '');
-    }
-    units.forEach(unit => {
-      var _VideoSample2;
-      switch (unit.type) {
-        // NON-IDR, NON RANDOM ACCESS SLICE
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-          if (!VideoSample) {
-            VideoSample = this.VideoSample = this.createVideoSample(false, pes.pts, pes.dts, '');
-          }
-          VideoSample.frame = true;
-          push = true;
-          break;
-
-        // CRA, BLA (random access picture)
-        case 16:
-        case 17:
-        case 18:
-        case 21:
-          push = true;
-          if (spsfound) {
-            var _VideoSample;
-            // handle PES not starting with AUD
-            // if we have frame data already, that cannot belong to the same frame, so force a push
-            if ((_VideoSample = VideoSample) != null && _VideoSample.frame && !VideoSample.key) {
-              this.pushAccessUnit(VideoSample, track);
-              VideoSample = this.VideoSample = null;
-            }
-          }
-          if (!VideoSample) {
-            VideoSample = this.VideoSample = this.createVideoSample(true, pes.pts, pes.dts, '');
-          }
-          VideoSample.key = true;
-          VideoSample.frame = true;
-          break;
-
-        // IDR
-        case 19:
-        case 20:
-          push = true;
-          // handle PES not starting with AUD
-          // if we have frame data already, that cannot belong to the same frame, so force a push
-          if ((_VideoSample2 = VideoSample) != null && _VideoSample2.frame && !VideoSample.key) {
-            this.pushAccessUnit(VideoSample, track);
-            VideoSample = this.VideoSample = null;
-          }
-          if (!VideoSample) {
-            VideoSample = this.VideoSample = this.createVideoSample(true, pes.pts, pes.dts, '');
-          }
-          VideoSample.key = true;
-          VideoSample.frame = true;
-          break;
-
-        // SEI
-        case 39:
-          push = true;
-          parseSEIMessageFromNALu(unit.data, 2,
-          // NALu header size
-          pes.pts, textTrack.samples);
-          break;
-
-        // VPS
-        case 32:
-          push = true;
-          if (!track.vps) {
-            const config = this.readVPS(unit.data);
-            track.params = _objectSpread2({}, config);
-            this.initVPS = unit.data;
-          }
-          track.vps = [unit.data];
-          break;
-
-        // SPS
-        case 33:
-          push = true;
-          spsfound = true;
-          if (typeof track.params === 'object') {
-            if (track.vps !== undefined && track.vps[0] !== this.initVPS && track.sps !== undefined && !this.matchSPS(track.sps[0], unit.data)) {
-              this.initVPS = track.vps[0];
-              track.sps = track.pps = undefined;
-            }
-            if (!track.sps) {
-              const config = this.readSPS(unit.data);
-              track.width = config.width;
-              track.height = config.height;
-              track.pixelRatio = config.pixelRatio;
-              track.duration = duration;
-              track.codec = config.codecString;
-              track.sps = [];
-              for (const prop in config.params) {
-                track.params[prop] = config.params[prop];
-              }
-            }
-            if (track.vps !== undefined && track.vps[0] === this.initVPS) {
-              track.sps.push(unit.data);
-            }
-          }
-          if (!VideoSample) {
-            VideoSample = this.VideoSample = this.createVideoSample(true, pes.pts, pes.dts, '');
-          }
-          VideoSample.key = true;
-          break;
-
-        // PPS
-        case 34:
-          push = true;
-          if (typeof track.params === 'object') {
-            if (!track.pps) {
-              track.pps = [];
-              const config = this.readPPS(unit.data);
-              for (const prop in config) {
-                track.params[prop] = config[prop];
-              }
-            }
-            if (this.initVPS !== null || track.pps.length === 0) {
-              track.pps.push(unit.data);
-            }
-          }
-          break;
-
-        // ACCESS UNIT DELIMITER
-        case 35:
-          push = true;
-          track.audFound = true;
-          if (VideoSample) {
-            this.pushAccessUnit(VideoSample, track);
-          }
-          VideoSample = this.VideoSample = this.createVideoSample(false, pes.pts, pes.dts, '');
-          break;
-        default:
-          push = false;
-          if (VideoSample) {
-            VideoSample.debug += 'unknown or irrelevant NAL ' + unit.type + ' ';
-          }
-          break;
-      }
-      if (VideoSample && push) {
-        const units = VideoSample.units;
-        units.push(unit);
-      }
-    });
-    // if last PES packet, push samples
-    if (last && VideoSample) {
-      this.pushAccessUnit(VideoSample, track);
-      this.VideoSample = null;
-    }
-  }
-  getNALuType(data, offset) {
-    return (data[offset] & 0x7e) >>> 1;
-  }
-  ebsp2rbsp(arr) {
-    const dst = new Uint8Array(arr.byteLength);
-    let dstIdx = 0;
-    for (let i = 0; i < arr.byteLength; i++) {
-      if (i >= 2) {
-        // Unescape: Skip 0x03 after 00 00
-        if (arr[i] === 0x03 && arr[i - 1] === 0x00 && arr[i - 2] === 0x00) {
-          continue;
-        }
-      }
-      dst[dstIdx] = arr[i];
-      dstIdx++;
-    }
-    return new Uint8Array(dst.buffer, 0, dstIdx);
-  }
-  readVPS(vps) {
-    const eg = new ExpGolomb(vps);
-    // remove header
-    eg.readUByte();
-    eg.readUByte();
-    eg.readBits(4); // video_parameter_set_id
-    eg.skipBits(2);
-    eg.readBits(6); // max_layers_minus1
-    const max_sub_layers_minus1 = eg.readBits(3);
-    const temporal_id_nesting_flag = eg.readBoolean();
-    // ...vui fps can be here, but empty fps value is not critical for metadata
-
-    return {
-      numTemporalLayers: max_sub_layers_minus1 + 1,
-      temporalIdNested: temporal_id_nesting_flag
-    };
-  }
-  readSPS(sps) {
-    const eg = new ExpGolomb(this.ebsp2rbsp(sps));
-    eg.readUByte();
-    eg.readUByte();
-    eg.readBits(4); //video_parameter_set_id
-    const max_sub_layers_minus1 = eg.readBits(3);
-    eg.readBoolean(); // temporal_id_nesting_flag
-
-    // profile_tier_level
-    const general_profile_space = eg.readBits(2);
-    const general_tier_flag = eg.readBoolean();
-    const general_profile_idc = eg.readBits(5);
-    const general_profile_compatibility_flags_1 = eg.readUByte();
-    const general_profile_compatibility_flags_2 = eg.readUByte();
-    const general_profile_compatibility_flags_3 = eg.readUByte();
-    const general_profile_compatibility_flags_4 = eg.readUByte();
-    const general_constraint_indicator_flags_1 = eg.readUByte();
-    const general_constraint_indicator_flags_2 = eg.readUByte();
-    const general_constraint_indicator_flags_3 = eg.readUByte();
-    const general_constraint_indicator_flags_4 = eg.readUByte();
-    const general_constraint_indicator_flags_5 = eg.readUByte();
-    const general_constraint_indicator_flags_6 = eg.readUByte();
-    const general_level_idc = eg.readUByte();
-    const sub_layer_profile_present_flags = [];
-    const sub_layer_level_present_flags = [];
-    for (let i = 0; i < max_sub_layers_minus1; i++) {
-      sub_layer_profile_present_flags.push(eg.readBoolean());
-      sub_layer_level_present_flags.push(eg.readBoolean());
-    }
-    if (max_sub_layers_minus1 > 0) {
-      for (let i = max_sub_layers_minus1; i < 8; i++) {
-        eg.readBits(2);
-      }
-    }
-    for (let i = 0; i < max_sub_layers_minus1; i++) {
-      if (sub_layer_profile_present_flags[i]) {
-        eg.readUByte(); // sub_layer_profile_space, sub_layer_tier_flag, sub_layer_profile_idc
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte(); // sub_layer_profile_compatibility_flag
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte();
-        eg.readUByte();
-      }
-      if (sub_layer_level_present_flags[i]) {
-        eg.readUByte();
-      }
-    }
-    eg.readUEG(); // seq_parameter_set_id
-    const chroma_format_idc = eg.readUEG();
-    if (chroma_format_idc == 3) {
-      eg.skipBits(1); //separate_colour_plane_flag
-    }
-    const pic_width_in_luma_samples = eg.readUEG();
-    const pic_height_in_luma_samples = eg.readUEG();
-    const conformance_window_flag = eg.readBoolean();
-    let pic_left_offset = 0,
-      pic_right_offset = 0,
-      pic_top_offset = 0,
-      pic_bottom_offset = 0;
-    if (conformance_window_flag) {
-      pic_left_offset += eg.readUEG();
-      pic_right_offset += eg.readUEG();
-      pic_top_offset += eg.readUEG();
-      pic_bottom_offset += eg.readUEG();
-    }
-    const bit_depth_luma_minus8 = eg.readUEG();
-    const bit_depth_chroma_minus8 = eg.readUEG();
-    const log2_max_pic_order_cnt_lsb_minus4 = eg.readUEG();
-    const sub_layer_ordering_info_present_flag = eg.readBoolean();
-    for (let i = sub_layer_ordering_info_present_flag ? 0 : max_sub_layers_minus1; i <= max_sub_layers_minus1; i++) {
-      eg.skipUEG(); // max_dec_pic_buffering_minus1[i]
-      eg.skipUEG(); // max_num_reorder_pics[i]
-      eg.skipUEG(); // max_latency_increase_plus1[i]
-    }
-    eg.skipUEG(); // log2_min_luma_coding_block_size_minus3
-    eg.skipUEG(); // log2_diff_max_min_luma_coding_block_size
-    eg.skipUEG(); // log2_min_transform_block_size_minus2
-    eg.skipUEG(); // log2_diff_max_min_transform_block_size
-    eg.skipUEG(); // max_transform_hierarchy_depth_inter
-    eg.skipUEG(); // max_transform_hierarchy_depth_intra
-    const scaling_list_enabled_flag = eg.readBoolean();
-    if (scaling_list_enabled_flag) {
-      const sps_scaling_list_data_present_flag = eg.readBoolean();
-      if (sps_scaling_list_data_present_flag) {
-        for (let sizeId = 0; sizeId < 4; sizeId++) {
-          for (let matrixId = 0; matrixId < (sizeId === 3 ? 2 : 6); matrixId++) {
-            const scaling_list_pred_mode_flag = eg.readBoolean();
-            if (!scaling_list_pred_mode_flag) {
-              eg.readUEG(); // scaling_list_pred_matrix_id_delta
-            } else {
-              const coefNum = Math.min(64, 1 << 4 + (sizeId << 1));
-              if (sizeId > 1) {
-                eg.readEG();
-              }
-              for (let i = 0; i < coefNum; i++) {
-                eg.readEG();
-              }
-            }
-          }
-        }
-      }
-    }
-    eg.readBoolean(); // amp_enabled_flag
-    eg.readBoolean(); // sample_adaptive_offset_enabled_flag
-    const pcm_enabled_flag = eg.readBoolean();
-    if (pcm_enabled_flag) {
-      eg.readUByte();
-      eg.skipUEG();
-      eg.skipUEG();
-      eg.readBoolean();
-    }
-    const num_short_term_ref_pic_sets = eg.readUEG();
-    let num_delta_pocs = 0;
-    for (let i = 0; i < num_short_term_ref_pic_sets; i++) {
-      let inter_ref_pic_set_prediction_flag = false;
-      if (i !== 0) {
-        inter_ref_pic_set_prediction_flag = eg.readBoolean();
-      }
-      if (inter_ref_pic_set_prediction_flag) {
-        if (i === num_short_term_ref_pic_sets) {
-          eg.readUEG();
-        }
-        eg.readBoolean();
-        eg.readUEG();
-        let next_num_delta_pocs = 0;
-        for (let j = 0; j <= num_delta_pocs; j++) {
-          const used_by_curr_pic_flag = eg.readBoolean();
-          let use_delta_flag = false;
-          if (!used_by_curr_pic_flag) {
-            use_delta_flag = eg.readBoolean();
-          }
-          if (used_by_curr_pic_flag || use_delta_flag) {
-            next_num_delta_pocs++;
-          }
-        }
-        num_delta_pocs = next_num_delta_pocs;
-      } else {
-        const num_negative_pics = eg.readUEG();
-        const num_positive_pics = eg.readUEG();
-        num_delta_pocs = num_negative_pics + num_positive_pics;
-        for (let j = 0; j < num_negative_pics; j++) {
-          eg.readUEG();
-          eg.readBoolean();
-        }
-        for (let j = 0; j < num_positive_pics; j++) {
-          eg.readUEG();
-          eg.readBoolean();
-        }
-      }
-    }
-    const long_term_ref_pics_present_flag = eg.readBoolean();
-    if (long_term_ref_pics_present_flag) {
-      const num_long_term_ref_pics_sps = eg.readUEG();
-      for (let i = 0; i < num_long_term_ref_pics_sps; i++) {
-        for (let j = 0; j < log2_max_pic_order_cnt_lsb_minus4 + 4; j++) {
-          eg.readBits(1);
-        }
-        eg.readBits(1);
-      }
-    }
-    let min_spatial_segmentation_idc = 0;
-    let sar_width = 1,
-      sar_height = 1;
-    let fps_fixed = true,
-      fps_den = 1,
-      fps_num = 0;
-    eg.readBoolean(); // sps_temporal_mvp_enabled_flag
-    eg.readBoolean(); // strong_intra_smoothing_enabled_flag
-    let default_display_window_flag = false;
-    const vui_parameters_present_flag = eg.readBoolean();
-    if (vui_parameters_present_flag) {
-      const aspect_ratio_info_present_flag = eg.readBoolean();
-      if (aspect_ratio_info_present_flag) {
-        const aspect_ratio_idc = eg.readUByte();
-        const sar_width_table = [1, 12, 10, 16, 40, 24, 20, 32, 80, 18, 15, 64, 160, 4, 3, 2];
-        const sar_height_table = [1, 11, 11, 11, 33, 11, 11, 11, 33, 11, 11, 33, 99, 3, 2, 1];
-        if (aspect_ratio_idc > 0 && aspect_ratio_idc < 16) {
-          sar_width = sar_width_table[aspect_ratio_idc - 1];
-          sar_height = sar_height_table[aspect_ratio_idc - 1];
-        } else if (aspect_ratio_idc === 255) {
-          sar_width = eg.readBits(16);
-          sar_height = eg.readBits(16);
-        }
-      }
-      const overscan_info_present_flag = eg.readBoolean();
-      if (overscan_info_present_flag) {
-        eg.readBoolean();
-      }
-      const video_signal_type_present_flag = eg.readBoolean();
-      if (video_signal_type_present_flag) {
-        eg.readBits(3);
-        eg.readBoolean();
-        const colour_description_present_flag = eg.readBoolean();
-        if (colour_description_present_flag) {
-          eg.readUByte();
-          eg.readUByte();
-          eg.readUByte();
-        }
-      }
-      const chroma_loc_info_present_flag = eg.readBoolean();
-      if (chroma_loc_info_present_flag) {
-        eg.readUEG();
-        eg.readUEG();
-      }
-      eg.readBoolean(); // neutral_chroma_indication_flag
-      eg.readBoolean(); // field_seq_flag
-      eg.readBoolean(); // frame_field_info_present_flag
-      default_display_window_flag = eg.readBoolean();
-      if (default_display_window_flag) {
-        pic_left_offset += eg.readUEG();
-        pic_right_offset += eg.readUEG();
-        pic_top_offset += eg.readUEG();
-        pic_bottom_offset += eg.readUEG();
-      }
-      const vui_timing_info_present_flag = eg.readBoolean();
-      if (vui_timing_info_present_flag) {
-        fps_den = eg.readBits(32);
-        fps_num = eg.readBits(32);
-        const vui_poc_proportional_to_timing_flag = eg.readBoolean();
-        if (vui_poc_proportional_to_timing_flag) {
-          eg.readUEG();
-        }
-        const vui_hrd_parameters_present_flag = eg.readBoolean();
-        if (vui_hrd_parameters_present_flag) {
-          //const commonInfPresentFlag = true;
-          //if (commonInfPresentFlag) {
-          const nal_hrd_parameters_present_flag = eg.readBoolean();
-          const vcl_hrd_parameters_present_flag = eg.readBoolean();
-          let sub_pic_hrd_params_present_flag = false;
-          if (nal_hrd_parameters_present_flag || vcl_hrd_parameters_present_flag) {
-            sub_pic_hrd_params_present_flag = eg.readBoolean();
-            if (sub_pic_hrd_params_present_flag) {
-              eg.readUByte();
-              eg.readBits(5);
-              eg.readBoolean();
-              eg.readBits(5);
-            }
-            eg.readBits(4); // bit_rate_scale
-            eg.readBits(4); // cpb_size_scale
-            if (sub_pic_hrd_params_present_flag) {
-              eg.readBits(4);
-            }
-            eg.readBits(5);
-            eg.readBits(5);
-            eg.readBits(5);
-          }
-          //}
-          for (let i = 0; i <= max_sub_layers_minus1; i++) {
-            fps_fixed = eg.readBoolean(); // fixed_pic_rate_general_flag
-            const fixed_pic_rate_within_cvs_flag = fps_fixed || eg.readBoolean();
-            let low_delay_hrd_flag = false;
-            if (fixed_pic_rate_within_cvs_flag) {
-              eg.readEG();
-            } else {
-              low_delay_hrd_flag = eg.readBoolean();
-            }
-            const cpb_cnt = low_delay_hrd_flag ? 1 : eg.readUEG() + 1;
-            if (nal_hrd_parameters_present_flag) {
-              for (let j = 0; j < cpb_cnt; j++) {
-                eg.readUEG();
-                eg.readUEG();
-                if (sub_pic_hrd_params_present_flag) {
-                  eg.readUEG();
-                  eg.readUEG();
-                }
-                eg.skipBits(1);
-              }
-            }
-            if (vcl_hrd_parameters_present_flag) {
-              for (let j = 0; j < cpb_cnt; j++) {
-                eg.readUEG();
-                eg.readUEG();
-                if (sub_pic_hrd_params_present_flag) {
-                  eg.readUEG();
-                  eg.readUEG();
-                }
-                eg.skipBits(1);
-              }
-            }
-          }
-        }
-      }
-      const bitstream_restriction_flag = eg.readBoolean();
-      if (bitstream_restriction_flag) {
-        eg.readBoolean(); // tiles_fixed_structure_flag
-        eg.readBoolean(); // motion_vectors_over_pic_boundaries_flag
-        eg.readBoolean(); // restricted_ref_pic_lists_flag
-        min_spatial_segmentation_idc = eg.readUEG();
-      }
-    }
-    let width = pic_width_in_luma_samples,
-      height = pic_height_in_luma_samples;
-    if (conformance_window_flag || default_display_window_flag) {
-      let chroma_scale_w = 1,
-        chroma_scale_h = 1;
-      if (chroma_format_idc === 1) {
-        // YUV 420
-        chroma_scale_w = chroma_scale_h = 2;
-      } else if (chroma_format_idc == 2) {
-        // YUV 422
-        chroma_scale_w = 2;
-      }
-      width = pic_width_in_luma_samples - chroma_scale_w * pic_right_offset - chroma_scale_w * pic_left_offset;
-      height = pic_height_in_luma_samples - chroma_scale_h * pic_bottom_offset - chroma_scale_h * pic_top_offset;
-    }
-    const profile_space_string = general_profile_space ? ['A', 'B', 'C'][general_profile_space] : '';
-    const profile_compatibility_buf = general_profile_compatibility_flags_1 << 24 | general_profile_compatibility_flags_2 << 16 | general_profile_compatibility_flags_3 << 8 | general_profile_compatibility_flags_4;
-    let profile_compatibility_rev = 0;
-    for (let i = 0; i < 32; i++) {
-      profile_compatibility_rev = (profile_compatibility_rev | (profile_compatibility_buf >> i & 1) << 31 - i) >>> 0; // reverse bit position (and cast as UInt32)
-    }
-    let profile_compatibility_flags_string = profile_compatibility_rev.toString(16);
-    if (general_profile_idc === 1 && profile_compatibility_flags_string === '2') {
-      profile_compatibility_flags_string = '6';
-    }
-    const tier_flag_string = general_tier_flag ? 'H' : 'L';
-    return {
-      codecString: `hvc1.${profile_space_string}${general_profile_idc}.${profile_compatibility_flags_string}.${tier_flag_string}${general_level_idc}.B0`,
-      params: {
-        general_tier_flag,
-        general_profile_idc,
-        general_profile_space,
-        general_profile_compatibility_flags: [general_profile_compatibility_flags_1, general_profile_compatibility_flags_2, general_profile_compatibility_flags_3, general_profile_compatibility_flags_4],
-        general_constraint_indicator_flags: [general_constraint_indicator_flags_1, general_constraint_indicator_flags_2, general_constraint_indicator_flags_3, general_constraint_indicator_flags_4, general_constraint_indicator_flags_5, general_constraint_indicator_flags_6],
-        general_level_idc,
-        bit_depth: bit_depth_luma_minus8 + 8,
-        bit_depth_luma_minus8,
-        bit_depth_chroma_minus8,
-        min_spatial_segmentation_idc,
-        chroma_format_idc: chroma_format_idc,
-        frame_rate: {
-          fixed: fps_fixed,
-          fps: fps_num / fps_den
-        }
-      },
-      width,
-      height,
-      pixelRatio: [sar_width, sar_height]
-    };
-  }
-  readPPS(pps) {
-    const eg = new ExpGolomb(this.ebsp2rbsp(pps));
-    eg.readUByte();
-    eg.readUByte();
-    eg.skipUEG(); // pic_parameter_set_id
-    eg.skipUEG(); // seq_parameter_set_id
-    eg.skipBits(2); // dependent_slice_segments_enabled_flag, output_flag_present_flag
-    eg.skipBits(3); // num_extra_slice_header_bits
-    eg.skipBits(2); // sign_data_hiding_enabled_flag, cabac_init_present_flag
-    eg.skipUEG();
-    eg.skipUEG();
-    eg.skipEG(); // init_qp_minus26
-    eg.skipBits(2); // constrained_intra_pred_flag, transform_skip_enabled_flag
-    const cu_qp_delta_enabled_flag = eg.readBoolean();
-    if (cu_qp_delta_enabled_flag) {
-      eg.skipUEG();
-    }
-    eg.skipEG(); // cb_qp_offset
-    eg.skipEG(); // cr_qp_offset
-    eg.skipBits(4); // pps_slice_chroma_qp_offsets_present_flag, weighted_pred_flag, weighted_bipred_flag, transquant_bypass_enabled_flag
-    const tiles_enabled_flag = eg.readBoolean();
-    const entropy_coding_sync_enabled_flag = eg.readBoolean();
-    let parallelismType = 1; // slice-based parallel decoding
-    if (entropy_coding_sync_enabled_flag && tiles_enabled_flag) {
-      parallelismType = 0; // mixed-type parallel decoding
-    } else if (entropy_coding_sync_enabled_flag) {
-      parallelismType = 3; // wavefront-based parallel decoding
-    } else if (tiles_enabled_flag) {
-      parallelismType = 2; // tile-based parallel decoding
-    }
-    return {
-      parallelismType
-    };
-  }
-  matchSPS(sps1, sps2) {
-    // compare without headers and VPS related params
-    return String.fromCharCode.apply(null, sps1).substr(3) === String.fromCharCode.apply(null, sps2).substr(3);
   }
 }
 
@@ -19459,7 +19083,8 @@ class StreamController extends BaseStreamController {
         }
         // set new level to playlist loader : this will trigger start level load
         // hls.nextLoadLevel remains until it is set to a new value or until a new frag is successfully loaded
-        this.level = hls.nextLoadLevel = startLevel;
+        hls.nextLoadLevel = startLevel;
+        this.level = hls.loadLevel;
         this.loadedmetadata = false;
       }
       // if startPosition undefined but lastCurrentTime set, set startPosition to last currentTime
@@ -19530,21 +19155,20 @@ class StreamController extends BaseStreamController {
     this.checkFragmentChanged();
   }
   doTickIdle() {
+    if (!this.buffering) {
+      return;
+    }
     const {
       hls,
       levelLastLoaded,
       levels,
       media
     } = this;
-    const {
-      config,
-      nextLoadLevel: level
-    } = hls;
 
     // if start level not parsed yet OR
     // if video not attached AND start fragment already requested OR start frag prefetch not enabled
     // exit loop, as we either need more info (level not parsed) or we need media to be attached to load new fragment
-    if (levelLastLoaded === null || !media && (this.startFragRequested || !config.startFragPrefetch)) {
+    if (levelLastLoaded === null || !media && (this.startFragRequested || !hls.config.startFragPrefetch)) {
       return;
     }
 
@@ -19552,6 +19176,7 @@ class StreamController extends BaseStreamController {
     if (this.altAudio && this.audioOnly) {
       return;
     }
+    const level = hls.nextLoadLevel;
     if (!(levels != null && levels[level])) {
       return;
     }
@@ -19771,8 +19396,8 @@ class StreamController extends BaseStreamController {
     if (media) {
       media.removeEventListener('playing', this.onMediaPlaying);
       media.removeEventListener('seeked', this.onMediaSeeked);
-      this.videoBuffer = null;
     }
+    this.videoBuffer = null;
     this.fragPlaying = null;
     if (this.gapController) {
       this.gapController.destroy();
@@ -20407,6 +20032,17 @@ class StreamController extends BaseStreamController {
   getMainFwdBufferInfo() {
     return this.getFwdBufferInfo(this.mediaBuffer ? this.mediaBuffer : this.media, PlaylistLevelType.MAIN);
   }
+  get maxBufferLength() {
+    const {
+      levels,
+      level
+    } = this;
+    const levelInfo = levels == null ? void 0 : levels[level];
+    if (!levelInfo) {
+      return this.config.maxBufferLength;
+    }
+    return this.getMaxBufferLength(levelInfo.maxBitrate);
+  }
   backtrack(frag) {
     this.couldBacktrack = true;
     // Causes findFragments to backtrack through fragments to find the keyframe
@@ -20581,7 +20217,6 @@ class Hls {
     this.logger = void 0;
     this.coreComponents = void 0;
     this.networkControllers = void 0;
-    this.started = false;
     this._emitter = new EventEmitter();
     this._autoLevelCapping = -1;
     this._maxHdcpLevel = null;
@@ -20615,7 +20250,9 @@ class Hls {
     } = config;
     const errorController = new ConfigErrorController(this);
     const abrController = this.abrController = new ConfigAbrController(this);
-    const bufferController = this.bufferController = new ConfigBufferController(this);
+    // FragmentTracker must be defined before StreamController because the order of event handling is important
+    const fragmentTracker = new FragmentTracker(this);
+    const bufferController = this.bufferController = new ConfigBufferController(this, fragmentTracker);
     const capLevelController = this.capLevelController = new ConfigCapLevelController(this);
     const fpsController = new ConfigFpsController(this);
     const playListLoader = new PlaylistLoader(this);
@@ -20624,8 +20261,6 @@ class Hls {
     // ConentSteeringController is defined before LevelController to receive Multivariant Playlist events first
     const contentSteering = ConfigContentSteeringController ? new ConfigContentSteeringController(this) : null;
     const levelController = this.levelController = new LevelController(this, contentSteering);
-    // FragmentTracker must be defined before StreamController because the order of event handling is important
-    const fragmentTracker = new FragmentTracker(this);
     const keyLoader = new KeyLoader(this.config);
     const streamController = this.streamController = new StreamController(this, fragmentTracker, keyLoader);
 
@@ -20804,7 +20439,6 @@ class Hls {
    */
   startLoad(startPosition = -1) {
     this.logger.log(`startLoad(${startPosition})`);
-    this.started = true;
     this.networkControllers.forEach(controller => {
       controller.startLoad(startPosition);
     });
@@ -20815,33 +20449,30 @@ class Hls {
    */
   stopLoad() {
     this.logger.log('stopLoad');
-    this.started = false;
     this.networkControllers.forEach(controller => {
       controller.stopLoad();
     });
   }
 
   /**
-   * Resumes stream controller segment loading if previously started.
+   * Resumes stream controller segment loading after `pauseBuffering` has been called.
    */
   resumeBuffering() {
-    if (this.started) {
-      this.networkControllers.forEach(controller => {
-        if ('fragmentLoader' in controller) {
-          controller.startLoad(-1);
-        }
-      });
-    }
+    this.networkControllers.forEach(controller => {
+      if (controller.resumeBuffering) {
+        controller.resumeBuffering();
+      }
+    });
   }
 
   /**
-   * Stops stream controller segment loading without changing 'started' state like stopLoad().
+   * Prevents stream controller from loading new segments until `resumeBuffering` is called.
    * This allows for media buffering to be paused without interupting playlist loading.
    */
   pauseBuffering() {
     this.networkControllers.forEach(controller => {
-      if ('fragmentLoader' in controller) {
-        controller.stopLoad();
+      if (controller.pauseBuffering) {
+        controller.pauseBuffering();
       }
     });
   }
@@ -21165,6 +20796,9 @@ class Hls {
   get mainForwardBufferInfo() {
     return this.streamController.getMainFwdBufferInfo();
   }
+  get maxBufferLength() {
+    return this.streamController.maxBufferLength;
+  }
 
   /**
    * Find and select the best matching audio track, making a level switch when a Group change is necessary.
@@ -21339,5 +20973,5 @@ var KeySystemFormats = empty.KeySystemFormats;
 var KeySystems = empty.KeySystems;
 var SubtitleStreamController = empty.SubtitleStreamController;
 var TimelineController = empty.TimelineController;
-export { AbrController, AttrList, Cues as AudioStreamController, Cues as AudioTrackController, BasePlaylistController, BaseSegment, BaseStreamController, BufferController, Cues as CMCDController, CapLevelController, ChunkMetadata, ContentSteeringController, DateRange, Cues as EMEController, ErrorActionFlags, ErrorController, ErrorDetails, ErrorTypes, Events, FPSController, Fragment, Hls, HlsSkip, HlsUrlParameters, KeySystemFormats, KeySystems, Level, LevelDetails, LevelKey, LoadStats, MetadataSchema, NetworkErrorAction, Part, PlaylistLevelType, SubtitleStreamController, Cues as SubtitleTrackController, TimelineController, Hls as default, getMediaSource, isMSESupported, isSupported };
+export { AbrController, AttrList, HevcVideoParser as AudioStreamController, HevcVideoParser as AudioTrackController, BasePlaylistController, BaseSegment, BaseStreamController, BufferController, HevcVideoParser as CMCDController, CapLevelController, ChunkMetadata, ContentSteeringController, DateRange, HevcVideoParser as EMEController, ErrorActionFlags, ErrorController, ErrorDetails, ErrorTypes, Events, FPSController, Fragment, Hls, HlsSkip, HlsUrlParameters, KeySystemFormats, KeySystems, Level, LevelDetails, LevelKey, LoadStats, MetadataSchema, NetworkErrorAction, Part, PlaylistLevelType, SubtitleStreamController, HevcVideoParser as SubtitleTrackController, TimelineController, Hls as default, getMediaSource, isMSESupported, isSupported };
 //# sourceMappingURL=hls.light.mjs.map
