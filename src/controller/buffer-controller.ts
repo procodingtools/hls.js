@@ -929,7 +929,7 @@ export default class BufferController extends Logger implements ComponentAPI {
         this.log(`creating sourceBuffer(${mimeType})`);
         try {
           const sb = (sourceBuffer[trackName] =
-            mediaSource.addSourceBuffer(mimeType));
+            mediaSource.addSourceBuffer(this.refineMimeType(mimeType)));
           const sbName = trackName as SourceBufferName;
           this.addBufferListener(sbName, 'updatestart', this._onSBUpdateStart);
           this.addBufferListener(sbName, 'updateend', this._onSBUpdateEnd);
@@ -970,6 +970,20 @@ export default class BufferController extends Logger implements ComponentAPI {
         }
       }
     }
+  }
+
+  private refineMimeType(mimeType): string {
+    if (mimeType.includes("hvc1") || mimeType.includes("hev1")) {
+      // Split the string at the semicolon (;)
+      let parts = mimeType.split(';');
+
+      // Remove the part containing "hvc1" or "hev1"
+      let filteredParts = parts.filter(part => !part.includes("hvc1") && !part.includes("hev1"));
+
+      // Reconstruct the MIME type without "hvc1" or "hev1"
+      return filteredParts.join(';');
+    }
+    return mimeType;
   }
 
   // Keep as arrow functions so that we can directly reference these functions directly as event listeners

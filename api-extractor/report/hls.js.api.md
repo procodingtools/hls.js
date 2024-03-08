@@ -1636,7 +1636,11 @@ class Hls implements HlsEventEmitter {
     on<E extends keyof HlsListeners, Context = undefined>(event: E, listener: HlsListeners[E], context?: Context): void;
     // (undocumented)
     once<E extends keyof HlsListeners, Context = undefined>(event: E, listener: HlsListeners[E], context?: Context): void;
+    // (undocumented)
+    pause(): Promise<void>;
     pauseBuffering(): void;
+    // (undocumented)
+    play(): Promise<void>;
     get playingDate(): Date | null;
     recoverMediaError(): void;
     // (undocumented)

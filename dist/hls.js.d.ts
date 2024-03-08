@@ -403,6 +403,7 @@ export declare class BufferController extends Logger implements ComponentAPI {
     updateSeekableRange(levelDetails: any): void;
     protected checkPendingTracks(): void;
     protected createSourceBuffers(tracks: TrackSet): void;
+    private refineMimeType;
     private _onMediaSourceOpen;
     private _onMediaSourceClose;
     private _onMediaSourceEnded;
@@ -1392,6 +1393,8 @@ declare class Hls implements HlsEventEmitter {
      * Set the source URL. Can be relative or absolute.
      */
     loadSource(url: string): void;
+    play(): Promise<void>;
+    pause(): Promise<void>;
     /**
      * Start loading data from the stream source.
      * Depending on default config, client starts loading automatically when a source is set.

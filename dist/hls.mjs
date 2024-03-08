@@ -19232,7 +19232,7 @@ class BufferController extends Logger {
         const mimeType = `${track.container};codecs=${codec}`;
         this.log(`creating sourceBuffer(${mimeType})`);
         try {
-          const sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(mimeType);
+          const sb = sourceBuffer[trackName] = mediaSource.addSourceBuffer(this.refineMimeType(mimeType));
           const sbName = trackName;
           this.addBufferListener(sbName, 'updatestart', this._onSBUpdateStart);
           this.addBufferListener(sbName, 'updateend', this._onSBUpdateEnd);
@@ -19268,6 +19268,19 @@ class BufferController extends Logger {
         }
       }
     }
+  }
+  refineMimeType(mimeType) {
+    if (mimeType.includes("hvc1") || mimeType.includes("hev1")) {
+      // Split the string at the semicolon (;)
+      let parts = mimeType.split(';');
+
+      // Remove the part containing "hvc1" or "hev1"
+      let filteredParts = parts.filter(part => !part.includes("hvc1") && !part.includes("hev1"));
+
+      // Reconstruct the MIME type without "hvc1" or "hev1"
+      return filteredParts.join(';');
+    }
+    return mimeType;
   }
   get mediaSrc() {
     var _this$media;
@@ -28767,6 +28780,14 @@ class Hls {
     this.trigger(Events.MANIFEST_LOADING, {
       url: url
     });
+  }
+  async play() {
+    var _this$media;
+    await ((_this$media = this.media) == null ? void 0 : _this$media.play());
+  }
+  async pause() {
+    var _this$media2;
+    (_this$media2 = this.media) == null ? void 0 : _this$media2.pause();
   }
 
   /**

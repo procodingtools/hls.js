@@ -432,6 +432,16 @@ export default class Hls implements HlsEventEmitter {
     this.trigger(Events.MANIFEST_LOADING, { url: url });
   }
 
+  async play() {
+    await this.media?.play();
+  }
+
+  async pause() {
+    this.media?.pause();
+  }
+
+
+
   /**
    * Start loading data from the stream source.
    * Depending on default config, client starts loading automatically when a source is set.
