@@ -19468,7 +19468,9 @@ class BufferController extends Logger {
       let filteredParts = parts.filter(part => !part.includes("hvc1") && !part.includes("hev1"));
 
       // Reconstruct the MIME type without "hvc1" or "hev1"
-      return filteredParts.join(';');
+      const mt = filteredParts.join(';');
+      this.hls.logger.info(`passing "${mt}" as bypassing type instead of "${mimeType}"`);
+      return mt;
     }
     return mimeType;
   }

@@ -8544,7 +8544,9 @@
         });
 
         // Reconstruct the MIME type without "hvc1" or "hev1"
-        return filteredParts.join(';');
+        var mt = filteredParts.join(';');
+        this.hls.logger.info("passing \"" + mt + "\" as bypassing type instead of \"" + mimeType + "\"");
+        return mt;
       }
       return mimeType;
     };
